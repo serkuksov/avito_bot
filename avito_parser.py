@@ -44,7 +44,7 @@ class Avito_parser(Parser):
                         after = after.replace(' ', ' ')
                     geoReferences.append({'content': geo['content'], 'after': after})
                 try:
-                    parameters = item['iva']['AutoParamsStep'][0]['payload']['text'][0], #возможно стоит убрать 0 если много параметров
+                    parameters = str(item['iva']['AutoParamsStep'][0]['payload']['text']) #возможно стоит убрать 0 если много параметров
                 except:
                     parameters = ''
                 advertisements = {

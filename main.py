@@ -1,5 +1,6 @@
+import datetime
 import logging
-import time
+import peewee
 from models import db, Advertisement
 from avito_parser import Avito_parser
 
@@ -30,17 +31,20 @@ def main():
             parser.open_new_page(url_page)
         advertisements = parser.get_advertisements()
         for advertisement in advertisements:
-            # print(advertisement['name'])
             try:
                 Advertisement.create(**advertisement)
-            except:
-                pass
+            except peewee.IntegrityError:
+                elm = Advertisement.get(Advertisement.id_avito == advertisement['id_avito'])
+                if advertisement['price'] != elm.price:
+                    price_difference = elm.price - advertisement['price']
+                    elm.price = advertisement['price']
+                    if price_difference > 0:
+                        print(f'Снижение цены для {advertisement["url"]} на {price_difference}')
+                elm.date_update = datetime.datetime.now()
+                elm.save()
         logging.info(f'Просмотрено {i} страниц из {len(pages)}')
         i += 1
     db.close()
-    # s = parser._get_data()
-    # with open('test2.json', 'w', encoding='utf-8') as f:
-    #     json.dump(s, f, ensure_ascii=False, indent=2)
 
 if __name__ == '__main__':
     main()

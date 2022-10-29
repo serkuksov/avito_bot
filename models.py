@@ -29,8 +29,9 @@ class Advertisement(BaseModel):
     parameters = CharField()
     coords_lat = IntegerField()
     coords_lng = IntegerField()
-    created = DateTimeField(default=datetime.datetime.now)
-    updated = DateTimeField(default=datetime.datetime.now)
+    date_creation = DateTimeField(default=datetime.datetime.now)
+    date_update = DateTimeField(default=datetime.datetime.now)
+    date_delete = DateTimeField()
 
     class Meta:
         table_name = 'Advertisements'
