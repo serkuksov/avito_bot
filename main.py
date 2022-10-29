@@ -17,7 +17,6 @@ def log():
     logging.getLogger("webdriver_manager").setLevel(logging.ERROR)
 
 
-
 def main():
     log()
     url ='https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
@@ -25,7 +24,6 @@ def main():
     db.create_tables([Advertisement])
     parser = Avito_parser(url)
     pages = parser.get_pages()
-    date_update = datetime.datetime.now()
     i = 1
     for url_page in pages:
         if url_page != url:
@@ -49,7 +47,8 @@ def main():
                 elm.save()
         logging.info(f'Просмотрено {i} страниц из {len(pages)}')
         i += 1
-    deactivation_list = Advertisement.select().where(Advertisement.date_update < date_update)
+    date_update = datetime.datetime.now() - datetime.timedelta(days=1)
+    deactivation_list = Advertisement.select().where((Advertisement.date_update < date_update) & (Advertisement.activated == True))
     for elm in deactivation_list:
         print(f'Объявление {elm.url} снято')
         elm.activated = False
