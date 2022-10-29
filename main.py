@@ -20,7 +20,7 @@ def log():
 
 def main():
     log()
-    url ='https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam/garazh-ASgBAgICAkSYA~QQqAjsVQ?f=ASgBAQECAkSYA~QQqAjsVQFAngwk3qsB4qsBAUXGmgwZeyJmcm9tIjoxMDAwLCJ0byI6MjUwMDAwfQ&i=1&s=104'
+    url ='https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
     db.connect()
     db.create_tables([Advertisement])
     parser = Avito_parser(url)
@@ -33,6 +33,7 @@ def main():
         for advertisement in advertisements:
             try:
                 Advertisement.create(**advertisement)
+                print(f'Добавлено новое объявление {advertisement["url"]} с ценой {advertisement["price"]}')
             except peewee.IntegrityError:
                 elm = Advertisement.get(Advertisement.id_avito == advertisement['id_avito'])
                 if advertisement['price'] != elm.price:
