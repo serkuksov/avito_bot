@@ -31,7 +31,7 @@ class Advertisement(BaseModel):
     coords_lng = IntegerField()
     date_creation = DateTimeField(default=datetime.datetime.now)
     date_update = DateTimeField(default=datetime.datetime.now)
-    date_delete = DateTimeField()
+    activated = BooleanField(default=True)
 
     class Meta:
         table_name = 'Advertisements'

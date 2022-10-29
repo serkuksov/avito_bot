@@ -25,6 +25,7 @@ def main():
     db.create_tables([Advertisement])
     parser = Avito_parser(url)
     pages = parser.get_pages()
+    date_update = datetime.datetime.now()
     i = 1
     for url_page in pages:
         if url_page != url:
@@ -42,9 +43,17 @@ def main():
                     if price_difference > 0:
                         print(f'Снижение цены для {advertisement["url"]} на {price_difference}')
                 elm.date_update = datetime.datetime.now()
+                if not elm.activated:
+                    elm.activated = True
+                    print(f'Объявление {elm.url} активировано')
                 elm.save()
         logging.info(f'Просмотрено {i} страниц из {len(pages)}')
         i += 1
+    deactivation_list = Advertisement.select().where(Advertisement.date_update < date_update)
+    for elm in deactivation_list:
+        print(f'Объявление {elm.url} снято')
+        elm.activated = False
+        elm.save()
     db.close()
 
 if __name__ == '__main__':

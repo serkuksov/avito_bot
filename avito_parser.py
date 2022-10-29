@@ -18,8 +18,8 @@ class Avito_parser(Parser):
             for elm in script.keys():
                 if '@avito/bx-single-page' in elm:
                     data = script[elm]['data']
-                    with open('test2.json', 'w', encoding='utf-8') as f:
-                        json.dump(data, f, ensure_ascii=False, indent=2)
+                    with open('test1.json', 'w', encoding='utf-8') as f:
+                        json.dump(script, f, ensure_ascii=False, indent=2)
                     return data
 
     def get_pages(self):
