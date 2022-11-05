@@ -2,7 +2,7 @@ import datetime
 
 import peewee
 from peewee import SqliteDatabase, Model, TextField, DateTimeField, PrimaryKeyField, CharField, \
-    IntegerField, BooleanField, TimestampField
+    IntegerField, BooleanField, FloatField
 
 db = SqliteDatabase('parser.db')
 
@@ -27,8 +27,8 @@ class Advertisement(BaseModel):
     delivery = BooleanField()
     message = BooleanField()
     parameters = CharField()
-    coords_lat = IntegerField()
-    coords_lng = IntegerField()
+    coords_lat = FloatField()
+    coords_lng = FloatField()
     date_creation = DateTimeField(default=datetime.datetime.now)
     date_update = DateTimeField(default=datetime.datetime.now)
     activated = BooleanField(default=True)
