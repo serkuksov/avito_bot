@@ -23,6 +23,9 @@ class Parser:
             option.add_argument("--disable-blink-features=AutomationControlled")
             option.add_argument('--log-level=50')
             option.add_argument("--start-maximized")
+            option.add_argument('--headless')
+            option.add_argument('--no-sandbox')
+            option.add_argument('--disable-dev-shm-usage')
             option.headless = True
             option.add_experimental_option('prefs', {
                 # "download.default_directory": "C:/Users/517/Download", #Change default directory for downloads
