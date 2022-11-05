@@ -51,7 +51,7 @@ class Avito_parser(Parser):
                                     'id_avito': item['id'],
                                     'url': 'https://www.avito.ru' + item['urlPath'],
                                     'name': item['title'].replace(' ', ' '),
-                                    'description': item['description'].replace(' ', ' ').replace('\n', ' '),
+                                    'description': self.get_description(item),
                                     'category': item['category']['name'],
                                     'location': item['location']['name'],
                                     'time': datetime.datetime.fromtimestamp(item['sortTimeStamp']//1000),
@@ -67,6 +67,13 @@ class Avito_parser(Parser):
                                     'coords_lng': item['coords']['lng']
                                  }
                 yield advertisements
+
+    def get_description(self, item):
+        try:
+            return item['description'].replace(' ', ' ').replace('\n', ' ')
+        except AttributeError:
+            return ''
+
 
 
 
