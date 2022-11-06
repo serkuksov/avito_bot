@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from parser import Parser
 
 
-class Addvertisement(NamedTuple):
+class Advertisement(NamedTuple):
     id_avito: int
     url: str
     name: str
@@ -70,10 +70,10 @@ class AvitoParser(Parser):
             yield url_page
             page += 1
 
-    def get_advertisements_from_one_page(self) -> Addvertisement:
+    def get_advertisements_from_one_page(self) -> Advertisement:
         """Генератор объявлений полученых с текущей страницы"""
         for item in self.params['data']['catalog']['items']:
-            advertisement = Addvertisement(
+            advertisement = Advertisement(
                 id_avito=item['id'],
                 url='https://www.avito.ru' + item['urlPath'],
                 name=item['title'].replace(' ', ' '),
@@ -84,7 +84,7 @@ class AvitoParser(Parser):
                 price=item['priceDetailed']['value'],
                 images=[image['636x476'] for image in item['images']],
                 address=item['geo']['formattedAddress'],
-                geoReferences=self._get_geoReferences(item),
+                geoReferences=self._get_georeferences(item),
                 phone=item['contacts']['phone'],
                 delivery=item['contacts']['delivery'],
                 message=item['contacts']['message'],
@@ -101,7 +101,7 @@ class AvitoParser(Parser):
         except AttributeError:
             return ''
 
-    def _get_geoReferences(self, item: dict) -> list[dict[str, str]]:
+    def _get_georeferences(self, item: dict) -> list[dict[str, str]]:
         geoReferences = []
         for geo in item['geo']['geoReferences']:
             after = geo.get('after')
@@ -122,7 +122,7 @@ class AvitoParser(Parser):
     def _get_time_advertisement(self, item: dict) -> datetime:
         return datetime.datetime.fromtimestamp(item['sortTimeStamp'] // 1000)
 
-    def get_advertisements_from_all_pages(self) -> Addvertisement:
+    def get_advertisements_from_all_pages(self) -> Advertisement:
         """Генератор объявлений полученых со всех страниц поисковой выдачи"""
         for advertisement in self.get_advertisements_from_one_page():
             yield advertisement
