@@ -4,6 +4,7 @@ from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.remote.webelement import WebElement
 
 
 class Parser:
@@ -53,13 +54,16 @@ class Parser:
         # self.driver.quit()
         logging.info(f'Браузер закрыт')
 
-    def get_html_elm(self, elm):
+    def get_html_elm(self, elm: WebElement) -> str:
+        """Получить HTML код выбраного элнмента"""
         return elm.get_attribute("outerHTML")
 
-    def get_page_source(self):
+    def get_html_page(self) -> str:
+        """Получить HTML код страницы"""
         return self.driver.page_source
 
-    def open_new_page(self, url: str):
+    def open_new_page(self, url: str) -> None:
+        """Метод открывает новую страницу в браузере"""
         logging.info(f'Открываю страницу: {url}')
         self.driver.get(url)
         time.sleep(self.timeout)
