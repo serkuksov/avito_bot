@@ -22,9 +22,9 @@ def main():
     log()
     test = 'https://www.avito.ru/tatarstan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
     url = 'https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
-    # db.create_tables([Advertisement])
     parser = AvitoParser(url)
     db.connect()
+    db.create_tables([Advertisement, Image, Price, Category, Location])
     try:
         for advertisement in parser.get_advertisements_from_all_pages():
             set_advertisement(advertisement)
