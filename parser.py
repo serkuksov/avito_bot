@@ -17,7 +17,7 @@ class Parser:
         try:
             caps = DesiredCapabilities().CHROME
             # caps["pageLoadStrategy"] = "normal"  # complete
-            caps["pageLoadStrategy"] = "eager"  #  interactive
+            caps["pageLoadStrategy"] = "eager"  # interactive
             # caps["pageLoadStrategy"] = "none"
             option = ChromeOptions()
             # option.add_experimental_option('dom.webdriver.enabled', False)
@@ -67,7 +67,3 @@ class Parser:
         logging.info(f'Открываю страницу: {url}')
         self.driver.get(url)
         time.sleep(self.timeout)
-
-
-
-
