@@ -73,27 +73,30 @@ class AvitoParser(Parser):
     def get_advertisements_from_one_page(self) -> Advertisement:
         """Генератор объявлений полученых с текущей страницы"""
         for item in self.params['data']['catalog']['items']:
-            advertisement = Advertisement(
-                id_avito=item['id'],
-                url='https://www.avito.ru' + item['urlPath'],
-                name=item['title'].replace(' ', ' '),
-                description=self._get_description(item),
-                category=item['category']['name'],
-                location=item['location']['name'],
-                time=self._get_time_advertisement(item),
-                price=item['priceDetailed']['value'],
-                images=[image['636x476'] for image in item['images']],
-                address=item['geo']['formattedAddress'],
-                geoReferences=self._get_georeferences(item),
-                phone=item['contacts']['phone'],
-                delivery=item['contacts']['delivery'],
-                message=item['contacts']['message'],
-                parameters=self._get_parametrs_advertisement(item),
-                coords_lat=item['coords']['lat'],
-                coords_lng=item['coords']['lng']
-            )
-            logging.debug(f'Получены параметры объявления: {advertisement.url}')
-            yield advertisement
+            try:
+                advertisement = Advertisement(
+                    id_avito=item['id'],
+                    url='https://www.avito.ru' + item['urlPath'],
+                    name=item['title'].replace(' ', ' '),
+                    description=self._get_description(item),
+                    category=item['category']['name'],
+                    location=item['location']['name'],
+                    time=self._get_time_advertisement(item),
+                    price=item['priceDetailed']['value'],
+                    images=[image['636x476'] for image in item['images']],
+                    address=item['geo']['formattedAddress'],
+                    geoReferences=self._get_georeferences(item),
+                    phone=item['contacts']['phone'],
+                    delivery=item['contacts']['delivery'],
+                    message=item['contacts']['message'],
+                    parameters=self._get_parametrs_advertisement(item),
+                    coords_lat=item['coords']['lat'],
+                    coords_lng=item['coords']['lng']
+                )
+                logging.debug(f'Получены параметры объявления: {advertisement.url}')
+                yield advertisement
+            except KeyError:
+                logging.error(f'Не найден ключ при разборе json полученного с {self.url}')
 
     def _get_description(self, item):
         try:
