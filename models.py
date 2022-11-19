@@ -61,6 +61,7 @@ class Price(BaseModel):
 
 
 def create_advertisement(advertisement: Ad_avito):
+    """Добавляет новое объявление"""
     ad = Advertisement(
         id_avito=advertisement.id_avito,
         url=advertisement.url,
@@ -87,6 +88,7 @@ def create_advertisement(advertisement: Ad_avito):
 
 
 def get_category_id(category: str, transaction: str = 'Купить') -> int:
+    """Получить id категорри, если нет создать новую категорию и вернуть id"""
     try:
         category_id = Category.get((Category.category == category) & (Category.transaction == transaction))
     except:
@@ -95,6 +97,7 @@ def get_category_id(category: str, transaction: str = 'Купить') -> int:
 
 
 def get_location_id(location: str) -> int:
+    """Получить id локации, если нет создать новую категорию и вернуть id"""
     try:
         location_id = Location.select(Location.location == location)
     except:
@@ -103,6 +106,8 @@ def get_location_id(location: str) -> int:
 
 
 def set_modification_price(price: int, date: datetime, advertisement: Advertisement) -> str:
+    """Добавить новую цену объявления если она изменилась.
+    Возвращает сообщение об успехе"""
     old_price = Price.select().where(Price.advertisement_id == advertisement.id).order_by(
         Price.date_update.desc()).get().price
     if old_price != price:
@@ -113,6 +118,7 @@ def set_modification_price(price: int, date: datetime, advertisement: Advertisem
 
 
 def set_advertisement(advertisement: Ad_avito) -> str:
+    """Производит активацию, изменение цены и добавление (если его нет) объявления в базу"""
     ad = Advertisement.select().where(Advertisement.id_avito == advertisement.id_avito)
     if ad.exists():
         ad = ad.get()
@@ -129,7 +135,8 @@ def set_advertisement(advertisement: Ad_avito) -> str:
 
 
 def deactivation_advertisement():
-    date_update = datetime.datetime.now() - datetime.timedelta(days=1)
+    """Активирует ранее снятое объявление"""
+    date_update = datetime.datetime.now() - datetime.timedelta(hours=1)
     deactivation_list = Advertisement.select(). \
         where((Advertisement.date_update < date_update) & Advertisement.activated)
     for elm in deactivation_list:
