@@ -4,6 +4,7 @@ import json
 import urllib.parse
 from typing import NamedTuple
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 from parser import Parser
 
 
@@ -31,14 +32,22 @@ class AvitoParser(Parser):
     """Парсер авито. Получение информации со страниц поисковой выдаче"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._get_params_page()
+        try:
+            self._get_params_page()
+        except NoSuchElementException:
+            raise Exception
         self.count_advertisements = self.get_count_advertisements()
         self.count_pages = self.get_count_pages()
 
+
     def _get_params_page(self):
         """Получение json с параметрами поисковой выдачи для страницы открытой драйвером"""
-        params = self.driver.find_element(By.XPATH, '//script[contains(text(), "window.__initialData__")]'). \
-            get_attribute("outerHTML")
+        try:
+            params = self.driver.find_element(By.XPATH, '//script[contains(text(), "window.__initialData__")]'). \
+                get_attribute("outerHTML")
+        except NoSuchElementException:
+            logging.error(f'На странице {self.url} не найден элемент XPATH')
+            raise NoSuchElementException
         params = params.split('"')[1]
         params = urllib.parse.unquote(params)
         params = json.loads(params)
@@ -96,6 +105,8 @@ class AvitoParser(Parser):
                 logging.debug(f'Получены параметры объявления: {advertisement.url}')
                 yield advertisement
             except KeyError:
+                if item.get('code'):
+                    continue
                 logging.error(f'Не найден ключ при разборе json полученного с {self.url}')
 
     def _get_description(self, item):
@@ -130,9 +141,12 @@ class AvitoParser(Parser):
         for advertisement in self.get_advertisements_from_one_page():
             yield advertisement
         for url_page in self.get_next_url_page():
-            self.open_new_page(url_page)
-            for advertisement in self.get_advertisements_from_one_page():
-                yield advertisement
+            try:
+                self.open_new_page(url_page)
+                for advertisement in self.get_advertisements_from_one_page():
+                    yield advertisement
+            except NoSuchElementException:
+                continue
 
     def open_new_page(self, *args, **kwargs):
         """Дополнительно получаем параметры со страницы"""

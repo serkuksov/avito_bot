@@ -1,7 +1,7 @@
 import datetime
 import logging
 import peewee
-from models import *
+from models import db, set_advertisement, deactivation_advertisement
 from avito_parser import AvitoParser
 
 
@@ -22,13 +22,17 @@ def main():
     log()
     test = 'https://www.avito.ru/tatarstan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
     url = 'https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
-    parser = AvitoParser(url)
     db.connect()
-    db.create_tables([Advertisement, Image, Price, Category, Location])
+    # db.create_tables([Advertisement, Image, Price, Category, Location])
     try:
+        parser = AvitoParser(url)
         for advertisement in parser.get_advertisements_from_all_pages():
-            set_advertisement(advertisement)
+            message = set_advertisement(advertisement)
+            if message:
+                print(message)
         deactivation_advertisement()
+    except Exception:
+        logging.error('Неудачная попытка парсинга авито')
     finally:
         db.close()
 
