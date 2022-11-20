@@ -1,8 +1,11 @@
-import datetime
+#!/usr/bin/env python
+
 import logging
-import peewee
+import asyncio
 from models import db, set_advertisement, deactivation_advertisement
 from avito_parser import AvitoParser
+from avito_bot import sending_messages
+from handlers_advertisement import checking_filter
 
 
 def log():
@@ -20,7 +23,6 @@ def log():
 
 def main():
     log()
-    test = 'https://www.avito.ru/tatarstan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
     url = 'https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
     db.connect()
     # db.create_tables([Advertisement, Image, Price, Category, Location])
@@ -28,8 +30,8 @@ def main():
         parser = AvitoParser(url)
         for advertisement in parser.get_advertisements_from_all_pages():
             message = set_advertisement(advertisement)
-            if message:
-                print(message)
+            if message and checking_filter(advertisement=advertisement):
+                asyncio.run(sending_messages(message))
         deactivation_advertisement()
     except Exception:
         logging.error('Неудачная попытка парсинга авито')
