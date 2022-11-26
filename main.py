@@ -2,7 +2,7 @@
 
 import logging
 import asyncio
-from models import db, set_advertisement, deactivation_advertisement
+from models import *
 from avito_parser import AvitoParser
 from avito_bot import sending_messages
 from handlers_advertisement import checking_filter
@@ -25,7 +25,7 @@ def main():
     log()
     url = 'https://www.avito.ru/kazan/garazhi_i_mashinomesta/prodam-ASgBAgICAUSYA~QQ?cd=1&s=104'
     db.connect()
-    # db.create_tables([Advertisement, Image, Price, Category, Location])
+    db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter])
     try:
         parser = AvitoParser(url)
         for advertisement in parser.get_advertisements_from_all_pages():

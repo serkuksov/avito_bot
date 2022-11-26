@@ -1,6 +1,7 @@
 import logging
 import datetime
 import json
+import time
 import urllib.parse
 from typing import NamedTuple
 from selenium.webdriver.common.by import By
@@ -30,6 +31,7 @@ class Advertisement(NamedTuple):
 
 class AvitoParser(Parser):
     """Парсер авито. Получение информации со страниц поисковой выдаче"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         try:
@@ -39,15 +41,20 @@ class AvitoParser(Parser):
         self.count_advertisements = self.get_count_advertisements()
         self.count_pages = self.get_count_pages()
 
-
     def _get_params_page(self):
         """Получение json с параметрами поисковой выдачи для страницы открытой драйвером"""
         try:
+            # TODO требуется заменить на метод ожидания появления элемента на странице
             params = self.driver.find_element(By.XPATH, '//script[contains(text(), "window.__initialData__")]'). \
                 get_attribute("outerHTML")
-        except NoSuchElementException:
-            logging.error(f'На странице {self.url} не найден элемент XPATH')
-            raise NoSuchElementException
+        except:
+            time.sleep(2)
+            try:
+                params = self.driver.find_element(By.XPATH, '//script[contains(text(), "window.__initialData__")]'). \
+                    get_attribute("outerHTML")
+            except:
+                logging.error(f'На странице {self.url} не найден элемент XPATH')
+                raise Exception
         params = params.split('"')[1]
         params = urllib.parse.unquote(params)
         params = json.loads(params)
@@ -145,7 +152,7 @@ class AvitoParser(Parser):
                 self.open_new_page(url_page)
                 for advertisement in self.get_advertisements_from_one_page():
                     yield advertisement
-            except NoSuchElementException:
+            except:
                 continue
 
     def open_new_page(self, *args, **kwargs):
