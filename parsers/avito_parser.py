@@ -6,7 +6,7 @@ import urllib.parse
 from typing import NamedTuple
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from parser import Parser
+from .parser import Parser
 
 
 class Advertisement(NamedTuple):
@@ -16,6 +16,7 @@ class Advertisement(NamedTuple):
     description: str
     category: str
     location: str
+    type_transaction: str
     time: datetime.datetime
     price: int
     images: list[str, ...]
@@ -59,7 +60,7 @@ class AvitoParser(Parser):
         params = urllib.parse.unquote(params)
         params = json.loads(params)
         # Сохранение json для отладки проекта
-        with open('test1.json', 'w', encoding='utf-8') as f:
+        with open('./test1.json', 'w', encoding='utf-8') as f:
             json.dump(params, f, ensure_ascii=False, indent=2)
         for elm in params.keys():
             if '@avito/bx-single-page' in elm:
@@ -90,6 +91,9 @@ class AvitoParser(Parser):
         """Генератор объявлений полученых с текущей страницы"""
         for item in self.params['data']['catalog']['items']:
             try:
+                if 'kuplyu' in item['urlPath'] or 'snimu' in item['urlPath']:
+                    logging.debug(f'Пропущено объявление с типом сделки куплю/сниму: {advertisement.url}')
+                    continue
                 advertisement = Advertisement(
                     id_avito=item['id'],
                     url='https://www.avito.ru' + item['urlPath'],
@@ -97,6 +101,7 @@ class AvitoParser(Parser):
                     description=self._get_description(item),
                     category=item['category']['name'],
                     location=item['location']['name'],
+                    type_transaction=self._get_type_transaction(item['priceDetailed']['postfix']),
                     time=self._get_time_advertisement(item),
                     price=item['priceDetailed']['value'],
                     images=[image['636x476'] for image in item['images']],
@@ -121,6 +126,16 @@ class AvitoParser(Parser):
             return item['description'].replace(' ', ' ').replace('\n', ' ').strip()
         except AttributeError:
             return ''
+
+
+    def _get_type_transaction(self, postfix: str) -> str:
+        if postfix == '':
+            return 'Купить'
+        elif 'месяц' in postfix:
+            return 'Снять на месяц'
+        elif 'сутки' in postfix:
+            return 'Снять на день'
+
 
     def _get_georeferences(self, item: dict) -> list[dict[str, str]]:
         geoReferences = []

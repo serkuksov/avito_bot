@@ -1,82 +1,20 @@
-import datetime
+import re
 import logging
 import statistics
-import re
+from peewee import Expression
+from db.models import *
+from parsers.avito_parser import Advertisement as Ad_avito
 
-from avito_parser import Advertisement as Ad_avito
-from peewee import SqliteDatabase, Model, TextField, DateTimeField, PrimaryKeyField, CharField, \
-    IntegerField, BooleanField, FloatField, ForeignKeyField, Expression
-
-db = SqliteDatabase('parser.db')
-
-
-class BaseModel(Model):
-    class Meta:
-        database = db
-
-
-class Category(BaseModel):
-    category = CharField(null=False)
-    transaction = CharField(null=False)
-
-
-class Location(BaseModel):
-    location = CharField(unique=True)
-
-
-class Property_type(BaseModel):
-    property_type = CharField(unique=True)
-
-
-class Parameter(BaseModel):
-    property_type_id = ForeignKeyField(Property_type)
-    security = BooleanField()
-    property_area = IntegerField(null=True)
-
-
-class Advertisement(BaseModel):
-    id = PrimaryKeyField(primary_key=True)
-    id_avito = IntegerField(unique=True)
-    url = CharField()
-    name = CharField()
-    description = TextField()
-    category_id = ForeignKeyField(Category)  # разделить
-    location_id = ForeignKeyField(Location)  # разделить
-    time = DateTimeField()
-    # price = IntegerField()  # разделить
-    # images = TextField()  # разделить
-    address = CharField()
-    phone = BooleanField()
-    delivery = BooleanField()
-    message = BooleanField()
-    parameter_id = ForeignKeyField(Parameter)
-    coords_lat = FloatField()
-    coords_lng = FloatField()
-    date_creation = DateTimeField(default=datetime.datetime.now)
-    date_update = DateTimeField(default=datetime.datetime.now)
-    activated = BooleanField(default=True)
-
-    class Meta:
-        table_name = 'Advertisements'
-        order_by = 'id'
-
-
-class Image(BaseModel):
-    image_url = CharField(null=False)
-    advertisement_id = ForeignKeyField(Advertisement)
-
-
-class Price(BaseModel):
-    price = IntegerField()
-    date_update = DateTimeField(default=datetime.datetime.now)
-    advertisement_id = ForeignKeyField(Advertisement)
-
+SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE = 1000
 
 def get_property_area(name: str) -> int:
     property_area = re.findall(r'\d+', name)
     if property_area:
         return int(property_area[0])
+
+
 def get_parameters_in_dict(parameters: str) -> dict:
+    """Преобразовать строку параметров для объявления в словарь"""
     dict_params = {}
     params = parameters.split(', ')
     dict_params['property_type'] = params[0]
@@ -90,12 +28,13 @@ def get_parameters_in_dict(parameters: str) -> dict:
 
 def create_parameter(advertisement: Ad_avito):
     """Добавляет параметры нового объявления"""
-    dict_params = get_parameters_in_dict(advertisement.parameters)
-    property_area = get_property_area(advertisement.name)
-    property_type_id = get_property_type_id(dict_params['property_type'])
-    security = dict_params['security']
-    parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area, security=security)
-    return parameter_id
+    if advertisement.category == 'Гаражи и машиноместа':
+        dict_params = get_parameters_in_dict(advertisement.parameters)
+        property_area = get_property_area(advertisement.name)
+        property_type_id = get_property_type_id(dict_params['property_type'])
+        security = dict_params['security']
+        parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area, security=security)
+        return parameter_id
 
 
 def create_advertisement(advertisement: Ad_avito):
@@ -107,6 +46,7 @@ def create_advertisement(advertisement: Ad_avito):
         description=advertisement.description,
         category_id=get_category_id(category=advertisement.category),
         location_id=get_location_id(location=advertisement.location),
+        type_transaction_id=get_type_transaction_id(type_transaction=advertisement.type_transaction),
         time=advertisement.time,
         address=advertisement.address,
         phone=advertisement.phone,
@@ -125,13 +65,22 @@ def create_advertisement(advertisement: Ad_avito):
     return message
 
 
-def get_category_id(category: str, transaction: str = 'Купить') -> int:
+def get_category_id(category: str) -> int:
     """Получить id категорри, если нет создать новую категорию и вернуть id"""
     try:
-        category_id = Category.get((Category.category == category) & (Category.transaction == transaction))
+        category_id = Category.get(Category.category == category)
     except:
-        category_id = Category.create(category=category, transaction=transaction).id
+        category_id = Category.create(category=category).id
     return category_id
+
+
+def get_type_transaction_id(type_transaction: str) -> int:
+    """Получить id типа сделки, если нет создать новый тип и вернуть id"""
+    try:
+        type_transaction_id = Type_transaction.get(Type_transaction.type_transaction == type_transaction)
+    except:
+        type_transaction_id = Type_transaction.create(type_transaction=type_transaction).id
+    return type_transaction_id
 
 
 def get_location_id(location: str) -> int:
@@ -183,7 +132,7 @@ def set_advertisement(advertisement: Ad_avito) -> str:
 
 def deactivation_advertisement():
     """Активирует ранее снятое объявление"""
-    date_update = datetime.datetime.now() - datetime.timedelta(hours=1)
+    date_update = datetime.datetime.now() - datetime.timedelta(hours=6)
     deactivation_list = Advertisement.select(). \
         where((Advertisement.date_update < date_update) & Advertisement.activated)
     for elm in deactivation_list:
@@ -208,7 +157,7 @@ def get_advertisements_in_given_coord_area(coords_lat: float, coords_lng: float,
     return advertisements
 
 
-def get_median_price(coords_lat: float, coords_lng: float, search_radius: int = 1000):
+def get_median_price(coords_lat: float, coords_lng: float, search_radius: int = SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE):
     property_type = ['кирпичный', 'железобетонный']
     expression_for_distance = get_search_term_by_distance(coords_lat=coords_lat, coords_lng=coords_lng, search_radius=search_radius)
     prices = Price.select(Price.price).join(Advertisement).join(Parameter).join(Property_type).\
@@ -223,6 +172,7 @@ if __name__ == "__main__":
         median_price = get_median_price(coords_lat=advertisement.coords_lat, coords_lng=advertisement.coords_lng)
         price = advertisement.price.price
         if price <= 0.87 * median_price - 0.13 * price - delta and price > 10000:
-            print(f'Для объявления {advertisement.url} с ценой {price}. Медианная цена ровна {median_price} для объявлений в радиусе {1500} метров')
+            print(f'Для объявления {advertisement.url} с ценой {price}. Медианная цена ровна {median_price} для объявлений в радиусе {1000} метров')
+
 
 
