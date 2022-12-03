@@ -2,7 +2,7 @@ import datetime
 from peewee import SqliteDatabase, Model, TextField, DateTimeField, PrimaryKeyField, CharField, \
     IntegerField, BooleanField, FloatField, ForeignKeyField
 
-db = SqliteDatabase('parser.db')
+db = SqliteDatabase('/home/sergei/PycharmProjects/avito_bot/parser.db')
 
 
 class BaseModel(Model):
@@ -69,18 +69,29 @@ class Price(BaseModel):
     advertisement_id = ForeignKeyField(Advertisement)
 
 
-class UserTg(BaseModel):
+class User_tg(BaseModel):
     tg_id = IntegerField(unique=True)
     date_creation = DateTimeField(default=datetime.datetime.now)
     date_update = DateTimeField(default=datetime.datetime.now)
     activated = BooleanField(default=True)
 
+
 class Filter(BaseModel):
-    user_id = ForeignKeyField(UserTg)
+    user_id = ForeignKeyField(User_tg)
     name_filter = CharField(unique=True)
-    min_price = IntegerField()
-    max_price = IntegerField()
-    cat = ForeignKeyField(Category)
+    type_transaction_id = ForeignKeyField(Type_transaction)
+    category_id = ForeignKeyField(Category)
+    parameter_property_type = ForeignKeyField(Property_type, null=True)
+    min_price = IntegerField(null=True)
+    max_price = IntegerField(null=True)
+    coords_lat = FloatField(null=True)
+    coords_lng = FloatField(null=True)
+    search_radius = IntegerField(null=True)
+    parameter_property_area_min = IntegerField(null=True)
+    parameter_property_area_max = IntegerField(null=True)
+    profitability_rent = IntegerField(null=True)
+    profitability_sale = IntegerField(null=True)
+
 
 
 

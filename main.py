@@ -23,7 +23,8 @@ def main():
     log()
     url = 'https://www.avito.ru/kazan/garazhi_i_mashinomesta?cd=1&s=104'
     db.connect()
-    # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter])
+    db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter])
+    exit(1)
     try:
         parser = AvitoParser(url)
         for advertisement in parser.get_advertisements_from_all_pages():

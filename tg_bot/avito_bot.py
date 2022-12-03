@@ -1,15 +1,17 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
+from db.handlers_users import create_user
 from config import TOKEN
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
 @dp.message_handler(commands=['start'])
-async def echo_send(message: types.Message):
+async def create_new_user(message: types.Message):
     user_id = message.from_user.id
-    await bot.send_message(chat_id=user_id, text=f'Пользователь добавлен к рассылке')
+    message = create_user(user_id=user_id)
+    await bot.send_message(chat_id=user_id, text=message)
 
 
 async def sending_messages(message: str):
