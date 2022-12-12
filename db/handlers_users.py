@@ -1,12 +1,12 @@
 import logging
 from db.models import db
-from db.models import User_tg, Filter
+from db.models import User_tg
 
 
 def create_user(user_id: int) -> str:
     with db:
         try:
-            User_tg.create(tg_id=user_id).save()
+            User_tg.create(user_id=user_id).save()
             message = 'Пользователь добавлен к рассылке'
         except:
             message = activate_user(user_id=user_id, activate=True)
@@ -16,7 +16,7 @@ def create_user(user_id: int) -> str:
 
 def activate_user(user_id: int, activate: bool = True) -> str:
     with db:
-        user = User_tg.get(tg_id=user_id)
+        user = User_tg.get(user_id=user_id)
         user.activated = activate
         user.save()
         if activate:

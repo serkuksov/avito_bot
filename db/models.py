@@ -70,7 +70,7 @@ class Price(BaseModel):
 
 
 class User_tg(BaseModel):
-    tg_id = IntegerField(unique=True)
+    user_id = IntegerField(primary_key=True, unique=True)
     date_creation = DateTimeField(default=datetime.datetime.now)
     date_update = DateTimeField(default=datetime.datetime.now)
     activated = BooleanField(default=True)
