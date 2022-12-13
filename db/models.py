@@ -81,7 +81,7 @@ class Filter(BaseModel):
     name_filter = CharField(unique=True)
     type_transaction_id = ForeignKeyField(Type_transaction)
     category_id = ForeignKeyField(Category)
-    parameter_property_type_id = ForeignKeyField(Property_type, null=True)
+    property_type_id = ForeignKeyField(Property_type, null=True)
     min_price = IntegerField(null=True)
     max_price = IntegerField(null=True)
     coords_lat = FloatField(null=True)

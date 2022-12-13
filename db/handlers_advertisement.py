@@ -32,6 +32,8 @@ def create_parameter(advertisement: Ad_avito):
         dict_params = get_parameters_in_dict(advertisement.parameters)
         property_area = get_property_area(advertisement.name)
         property_type_id = get_property_type_id(dict_params['property_type'])
+        if property_type_id is None:
+            property_type_id = create_property_type(dict_params['property_type'])
         security = dict_params['security']
         parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area, security=security)
         return parameter_id
@@ -39,14 +41,20 @@ def create_parameter(advertisement: Ad_avito):
 
 def create_advertisement(advertisement: Ad_avito):
     """Добавляет новое объявление"""
+    category_id = get_category_id(category=advertisement.category)
+    if category_id is None:
+        category_id = create_category(category=advertisement.category)
+    type_transaction_id = get_type_transaction_id(type_transaction=advertisement.type_transaction)
+    if type_transaction_id is None:
+        type_transaction_id = create_type_transaction(type_transaction=advertisement.type_transaction)
     ad = Advertisement(
         id_avito=advertisement.id_avito,
         url=advertisement.url,
         name=advertisement.name,
         description=advertisement.description,
-        category_id=get_category_id(category=advertisement.category),
+        category_id=category_id,
         location_id=get_location_id(location=advertisement.location),
-        type_transaction_id=get_type_transaction_id(type_transaction=advertisement.type_transaction),
+        type_transaction_id=type_transaction_id,
         time=advertisement.time,
         address=advertisement.address,
         phone=advertisement.phone,
@@ -66,20 +74,38 @@ def create_advertisement(advertisement: Ad_avito):
 
 
 def get_category_id(category: str) -> int:
-    """Получить id категорри, если нет создать новую категорию и вернуть id"""
-    try:
-        category_id = Category.get(Category.category == category)
-    except:
-        category_id = Category.create(category=category).id
+    """Получить id категорри, если нет вернуть None"""
+    category_id = Category.select().where(Category.category == category)
+    if category_id.exists():
+        return category_id.get().id
+
+def get_list_category() -> list[tuple]:
+    """Получить список кортежей в формате id, название категории"""
+    list_category = [(c.id, c.category) for c in Category.select(Category.id, Category.category)]
+    return list_category
+
+def create_category(category: str) -> int:
+    """Создать новую категорию и вернуть id"""
+    category_id = Category.create(category=category).id
     return category_id
 
 
 def get_type_transaction_id(type_transaction: str) -> int:
-    """Получить id типа сделки, если нет создать новый тип и вернуть id"""
-    try:
-        type_transaction_id = Type_transaction.get(Type_transaction.type_transaction == type_transaction)
-    except:
-        type_transaction_id = Type_transaction.create(type_transaction=type_transaction).id
+    """Получить id типа сделки, если нет вернуть None"""
+    type_transaction_id = Type_transaction.select().where(Type_transaction.type_transaction == type_transaction)
+    if type_transaction_id.exists():
+        return type_transaction_id.get().id
+
+
+def get_list_types_transactions() -> list[tuple[int, str]]:
+    """Получить список кортежей с id и типами сделок"""
+    type_transaction = [(t.id, t.type_transaction) for t in Type_transaction.select(Type_transaction.id, Type_transaction.type_transaction)]
+    return type_transaction
+
+
+def create_type_transaction(type_transaction: str) -> int:
+    """Добавить новый тип в БД и вернуть id"""
+    type_transaction_id = Type_transaction.create(type_transaction=type_transaction).id
     return type_transaction_id
 
 
@@ -93,11 +119,21 @@ def get_location_id(location: str) -> int:
 
 
 def get_property_type_id(property_type: str) -> int:
-    """Получить id типа недвижимости, если нет создать новый тип и вернуть id"""
-    try:
-        property_type_id = Property_type.get(Property_type.property_type == property_type)
-    except:
-        property_type_id = Property_type.create(property_type=property_type).id
+    """Получить id типа недвижимости, если нет вернуть None"""
+    property_type_id = Property_type.select().where(Property_type.property_type == property_type)
+    if property_type_id.exists():
+        return property_type_id.get().id
+
+
+def get_list_property_type() -> list[tuple]:
+    """Получить список кортежей с id и типами недвижимости"""
+    list_property_type = [(p.id, p.property_type) for p in Property_type.select(Property_type.id, Property_type.property_type)]
+    return list_property_type
+
+
+def create_property_type(property_type: str) -> int:
+    """Создать новый тип и вернуть id"""
+    property_type_id = Property_type.create(property_type=property_type).id
     return property_type_id
 
 
