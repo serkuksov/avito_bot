@@ -7,6 +7,10 @@ def add_filter(params: dict):
     Filter.create(**params)
 
 
+def del_filter_in_bd(filter_id: int) -> None:
+    Filter.delete_by_id(pk=filter_id)
+
+
 def get_filters(user_id: int) -> list[Filter]:
     return Filter.select(Filter, Type_transaction.type_transaction, Category.category, Property_type.property_type).\
         join(Type_transaction, on=(Filter.type_transaction_id == Type_transaction.id)).\

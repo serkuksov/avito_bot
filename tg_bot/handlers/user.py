@@ -2,12 +2,13 @@ from aiogram import types, Dispatcher
 from geopy import Nominatim
 from db.handlers_users import create_user, activate_user
 from db.handlers_advertisement import get_list_types_transactions, get_list_category, get_list_property_type
-from db.hendlers_filter import validation_name_filter, add_filter, get_filters
+from db.hendlers_filter import validation_name_filter, add_filter, get_filters, del_filter_in_bd
 from tg_bot.create_bot import bot
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from tg_bot.keyboards.user_kb import kb_start, kb_stop, kb_cancel
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.dispatcher.filters import Text
 
 
 class FSMUser(StatesGroup):
@@ -56,9 +57,15 @@ async def show_filters(message: types.Message):
                f'<b>Мин. доходнать аренды:</b> {one_filter.profitability_rent} %\n'\
                f'<b>Мин. доходнсть продажи:</b> {one_filter.profitability_sale} %'
         in_Keybord = InlineKeyboardMarkup(row_width=2)
-        in_Keybord.add(InlineKeyboardButton(text='Изменить', callback_data=f'edit_{one_filter.id}'))
+        # in_Keybord.add(InlineKeyboardButton(text='Изменить', callback_data=f'edit_{one_filter.id}'))
         in_Keybord.add(InlineKeyboardButton(text='Удалить', callback_data=f'del_{one_filter.id}'))
         await bot.send_message(chat_id=user_id, text=text, reply_markup=in_Keybord, parse_mode="HTML")
+
+
+async def del_filter(call: types.CallbackQuery):
+    filter_id = int(call.data.split('_')[1])
+    del_filter_in_bd(filter_id=filter_id)
+    await call.answer(text='Фильтр удален')
 
 
 async def create_filter(message: types.Message, state: FSMContext):
@@ -262,6 +269,7 @@ def register_handlers_user(dispatcher: Dispatcher):
     dispatcher.register_message_handler(deactivate_user, commands=['Деактивировать_рассылку'], state=None)
     dispatcher.register_message_handler(create_filter, commands=['Создать_новый_фильтр'], state=None)
     dispatcher.register_message_handler(show_filters, commands=['Показать_все_фильтры'], state=None)
+    dispatcher.register_callback_query_handler(del_filter, Text(startswith='del_'))
     dispatcher.register_message_handler(cancel, commands=['Отменить'], state="*")
     dispatcher.register_message_handler(add_name_filter, state=FSMUser.name_filter)
     dispatcher.register_callback_query_handler(add_type_transaction_id, state=FSMUser.type_transaction_id)
