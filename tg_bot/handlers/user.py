@@ -2,7 +2,7 @@ from aiogram import types, Dispatcher
 from geopy import Nominatim
 from db.handlers_users import create_user, activate_user
 from db.handlers_advertisement import get_list_types_transactions, get_list_category, get_list_property_type
-from db.hendlers_filter import validation_name_filter, add_filter
+from db.hendlers_filter import validation_name_filter, add_filter, get_filters
 from tg_bot.create_bot import bot
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -36,6 +36,29 @@ async def deactivate_user(message: types.Message):
     user_id = message.from_user.id
     text = activate_user(user_id=user_id, activate=False)
     await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_start)
+
+
+async def show_filters(message: types.Message):
+    user_id = message.from_user.id
+    geolocator = Nominatim(user_agent='avito_parser')
+    for one_filter in get_filters(user_id=user_id):
+        location = geolocator.reverse(f'{one_filter.coords_lat}, {one_filter.coords_lng}').address
+        text = f'<b>Название фильтра:</b> {one_filter.name_filter}\n'\
+               f'<b>Тип сделки:</b> {one_filter.type_transaction_id.type_transaction}\n'\
+               f'<b>Категория:</b> {one_filter.category_id.category}\n'\
+               f'<b>Тип недвижимости:</b> {one_filter.property_type_id.property_type}\n'\
+               f'<b>Мин. цена:</b> {one_filter.min_price} р.\n'\
+               f'<b>Макс. цена:</b> {one_filter.max_price} р.\n'\
+               f'<b>Адрес:</b> <code>{location}</code>\n'\
+               f'<b>Радиус поиска:</b> {one_filter.search_radius} м\n'\
+               f'<b>Мин. площадь:</b> {one_filter.parameter_property_area_min} м2\n'\
+               f'<b>Макс. площадь:</b> {one_filter.parameter_property_area_max} м2\n'\
+               f'<b>Мин. доходнать аренды:</b> {one_filter.profitability_rent} %\n'\
+               f'<b>Мин. доходнсть продажи:</b> {one_filter.profitability_sale} %'
+        in_Keybord = InlineKeyboardMarkup(row_width=2)
+        in_Keybord.add(InlineKeyboardButton(text='Изменить', callback_data=f'edit_{one_filter.id}'))
+        in_Keybord.add(InlineKeyboardButton(text='Удалить', callback_data=f'del_{one_filter.id}'))
+        await bot.send_message(chat_id=user_id, text=text, reply_markup=in_Keybord, parse_mode="HTML")
 
 
 async def create_filter(message: types.Message, state: FSMContext):
@@ -235,9 +258,10 @@ async def cancel(message: types.Message, state: FSMContext):
 
 
 def register_handlers_user(dispatcher: Dispatcher):
-    dispatcher.register_message_handler(add_new_user_and_activate, commands=['start', 'Активировать_рассылку'])
-    dispatcher.register_message_handler(deactivate_user, commands=['Деактивировать_рассылку'])
+    dispatcher.register_message_handler(add_new_user_and_activate, commands=['start', 'Активировать_рассылку'], state=None)
+    dispatcher.register_message_handler(deactivate_user, commands=['Деактивировать_рассылку'], state=None)
     dispatcher.register_message_handler(create_filter, commands=['Создать_новый_фильтр'], state=None)
+    dispatcher.register_message_handler(show_filters, commands=['Показать_все_фильтры'], state=None)
     dispatcher.register_message_handler(cancel, commands=['Отменить'], state="*")
     dispatcher.register_message_handler(add_name_filter, state=FSMUser.name_filter)
     dispatcher.register_callback_query_handler(add_type_transaction_id, state=FSMUser.type_transaction_id)
