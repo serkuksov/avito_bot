@@ -6,7 +6,7 @@ from db.hendlers_filter import validation_name_filter, add_filter, get_filters, 
 from tg_bot.create_bot import bot
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from tg_bot.keyboards.user_kb import kb_start, kb_stop, kb_cancel
+from tg_bot.keyboards.user_kb import kb_start, kb_stop, kb_cancel, kb_cancel_and_next
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher.filters import Text
 
@@ -50,19 +50,25 @@ async def show_filters(message: types.Message):
     filters = get_filters(user_id=user_id)
     if filters:
         for one_filter in filters:
+            property_type_id = one_filter.property_type_id
+            #TODO переписать в запрос к БД
+            if property_type_id is None:
+                property_type = '<i>все типы</i>'
+            else:
+                property_type = property_type_id.property_type
             location = geolocator.reverse(f'{one_filter.coords_lat}, {one_filter.coords_lng}').address
             text = f'<b>Название фильтра:</b> {one_filter.name_filter}\n'\
                    f'<b>Тип сделки:</b> {one_filter.type_transaction_id.type_transaction}\n'\
                    f'<b>Категория:</b> {one_filter.category_id.category}\n'\
-                   f'<b>Тип недвижимости:</b> {one_filter.property_type_id.property_type}\n'\
-                   f'<b>Мин. цена:</b> {one_filter.min_price} р.\n'\
-                   f'<b>Макс. цена:</b> {one_filter.max_price} р.\n'\
+                   f'<b>Тип недвижимости:</b> {property_type}\n'\
+                   f'<b>Мин. цена:</b> {one_filter.min_price:,} р.\n'\
+                   f'<b>Макс. цена:</b> {one_filter.max_price:,} р.\n'\
                    f'<b>Адрес:</b> <code>{location}</code>\n'\
-                   f'<b>Радиус поиска:</b> {one_filter.search_radius} м\n'\
-                   f'<b>Мин. площадь:</b> {one_filter.parameter_property_area_min} м2\n'\
-                   f'<b>Макс. площадь:</b> {one_filter.parameter_property_area_max} м2\n'\
-                   f'<b>Мин. доходнать аренды:</b> {one_filter.profitability_rent} %\n'\
-                   f'<b>Мин. доходнсть продажи:</b> {one_filter.profitability_sale} %'
+                   f'<b>Радиус поиска:</b> {one_filter.search_radius:,} м\n'\
+                   f'<b>Мин. площадь:</b> {one_filter.parameter_property_area_min:,} м2\n'\
+                   f'<b>Макс. площадь:</b> {one_filter.parameter_property_area_max:,} м2\n'\
+                   f'<b>Мин. доходнать аренды:</b> {one_filter.profitability_rent:,} %\n'\
+                   f'<b>Мин. доходнсть продажи:</b> {one_filter.profitability_sale:,} %'
             in_Keybord = InlineKeyboardMarkup(row_width=2)
             # in_Keybord.add(InlineKeyboardButton(text='Изменить', callback_data=f'edit_{one_filter.id}'))
             in_Keybord.add(InlineKeyboardButton(text='Удалить', callback_data=f'del_{one_filter.id}'))
@@ -123,8 +129,11 @@ async def add_category_id(call: types.CallbackQuery, state: FSMContext):
         data['category_id'] = category_id
     await FSMUser.next()
     in_keyboard = InlineKeyboardMarkup()
-    for property_type_id, property_type in get_list_property_type():
-        in_keyboard.add(InlineKeyboardButton(text=property_type, callback_data=str(category_id)))
+    for property_type_id, property_type in get_list_property_type(category_id):
+        in_keyboard.add(InlineKeyboardButton(text=property_type, callback_data=str(property_type_id)))
+    user_id = call.from_user['id']
+    text2 = '<i>Последующие шаги можно пропускать</i>'
+    await bot.send_message(chat_id=user_id, text=text2, reply_markup=kb_cancel_and_next, parse_mode='HTML')
     text = 'Выберите параметр недвижимости'
     await call.message.answer(text=text, reply_markup=in_keyboard)
     await call.answer()
@@ -140,36 +149,56 @@ async def add_parameter_property_type_id(call: types.CallbackQuery, state: FSMCo
     await call.answer()
 
 
+async def next_parameter_property_type_id(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    property_type_id = None
+    async with state.proxy() as data:
+        data['property_type_id'] = property_type_id
+    await FSMUser.next()
+    text = 'Введите минимальную цену'
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
+
+
 async def add_min_price(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        min_price = int(message.text)
+        if message.text == '/Пропустить':
+            min_price = 0
+        else:
+            min_price = int(message.text)
         async with state.proxy() as data:
             data['min_price'] = min_price
         await FSMUser.next()
         text = 'Введите макисмальную цену'
     except ValueError:
         text = 'Цена введена не корректно. Введите минимальную цену повторно'
-    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel)
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def add_max_price(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        max_price = int(message.text)
+        if message.text == '/Пропустить':
+            max_price = 9000000000
+        else:
+            max_price = int(message.text)
         async with state.proxy() as data:
             data['max_price'] = max_price
         await FSMUser.next()
         text = 'Введите адрес для поиска'
     except ValueError:
         text = 'Цена введена не корректно. Введите макисмальную цену повторно'
-    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel)
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def add_coords(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     geolocator = Nominatim(user_agent='avito_parser')
-    location = geolocator.geocode(message.text)
+    if message.text == '/Пропустить':
+        location_text = 'Казань'
+    else:
+        location_text = message.text
+    location = geolocator.geocode(location_text)
     try:
         coords_lat = location.latitude
         coords_lng = location.longitude
@@ -185,7 +214,7 @@ async def add_coords(message: types.Message, state: FSMContext):
         await bot.send_message(chat_id=user_id, text=text, reply_markup=in_keybord)
     except AttributeError:
         text = f'Адрес не найден, попробуйте ввести в другом виде'
-        await bot.send_message(chat_id=user_id, text=text)
+        await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def check_coords(call: types.CallbackQuery):
@@ -204,59 +233,74 @@ async def check_coords(call: types.CallbackQuery):
 async def add_search_radius(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        search_radius = int(message.text)
+        if message.text == '/Пропустить':
+            search_radius = 10000000
+        else:
+            search_radius = int(message.text)
         async with state.proxy() as data:
             data['search_radius'] = search_radius
         await FSMUser.next()
         text = 'Введите минимальную площадь недвижимости'
     except ValueError:
         text = 'Расстояние введено не корректно. Введите радиус поиска в метрах повторно'
-    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel)
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def add_parameter_property_area_min(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        parameter_property_area_min = int(message.text)
+        if message.text == '/Пропустить':
+            parameter_property_area_min = 0
+        else:
+            parameter_property_area_min = int(message.text)
         async with state.proxy() as data:
             data['parameter_property_area_min'] = parameter_property_area_min
         await FSMUser.next()
         text = 'Введите максимальную площадь недвижимости'
     except ValueError:
         text = 'Площадь введена не корректно. Введите минимальную площадь повторно'
-    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel)
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def add_parameter_property_area_max(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        parameter_property_area_max = int(message.text)
+        if message.text == '/Пропустить':
+            parameter_property_area_max = 9000000000
+        else:
+            parameter_property_area_max = int(message.text)
         async with state.proxy() as data:
             data['parameter_property_area_max'] = parameter_property_area_max
         await FSMUser.next()
         text = 'Введите минимальную доходность при сдаче в аренду'
     except ValueError:
         text = 'Площадь введена не корректно. Введите максимальную площадь повторно'
-    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel)
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def add_profitability_rent(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        profitability_rent = int(message.text)
+        if message.text == '/Пропустить':
+            profitability_rent = 0
+        else:
+            profitability_rent = int(message.text)
         async with state.proxy() as data:
             data['profitability_rent'] = profitability_rent
         await FSMUser.next()
         text = 'Введите минимальную доходность при перепродаже недвижимости'
     except ValueError:
         text = 'Доходность введена не корректно. Введите минимальную доходность при сдаче в аренду повторно'
-    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel)
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
 
 
 async def add_profitability_sale(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        profitability_sale = int(message.text)
+        if message.text == '/Пропустить':
+            profitability_sale = 0
+        else:
+            profitability_sale = int(message.text)
         async with state.proxy() as data:
             data['profitability_sale'] = profitability_sale
             add_filter(params=data)
@@ -287,6 +331,8 @@ def register_handlers_user(dispatcher: Dispatcher):
     dispatcher.register_callback_query_handler(add_category_id, state=FSMUser.category_id)
     dispatcher.register_callback_query_handler(add_parameter_property_type_id,
                                                state=FSMUser.parameter_property_type_id)
+    dispatcher.register_message_handler(next_parameter_property_type_id,
+                                        commands=['Пропустить'], state=FSMUser.parameter_property_type_id)
     dispatcher.register_message_handler(add_min_price, state=FSMUser.min_price)
     dispatcher.register_message_handler(add_max_price, state=FSMUser.max_price)
     dispatcher.register_message_handler(add_coords, state=FSMUser.coords)

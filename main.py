@@ -25,9 +25,9 @@ def log():
 def main():
     log()
     urls = [
-            'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
-            'https://www.avito.ru/kazan/zemelnye_uchastki',
-            # 'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
+            # 'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
+            # 'https://www.avito.ru/kazan/zemelnye_uchastki',
+            'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
             ]
     # db.connect()
     # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter])
@@ -38,8 +38,8 @@ def main():
             for advertisement in parser.get_advertisements_from_all_pages():
                 try:
                     message = set_advertisement(advertisement)
-                except Exception:
-                    logging.error('Не удалось записать объявление в базу')
+                except Exception as ex:
+                    logging.error(f'Не удалось записать объявление в базу. Ошибка: {ex}')
                     continue
                 if message:
                     profitability_rent = get_profitability_rent(advertisement)

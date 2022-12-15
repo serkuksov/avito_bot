@@ -31,6 +31,8 @@ def get_property_type_from_advertisement(advertisement: Ad_avito) -> str:
         property_type = get_parameters_in_dict(advertisement.parameters)['property_type']
     elif advertisement.category == 'Земельные участки':
         property_type = re.findall(r'\((.+)\)', advertisement.name)[0]
+    elif advertisement.category == 'Дома, дачи, коттеджи':
+        property_type = advertisement.name.split(' ')[0]
     else:
         raise ValueError('Не известная категория')
     return property_type
@@ -44,13 +46,15 @@ def get_security_from_advertisement(advertisement: Ad_avito) -> str:
     return security
 
 
-def get_property_area_from_advertisement(advertisement: Ad_avito) -> str:
+def get_property_area_from_advertisement(advertisement: Ad_avito) -> int:
     property_area = re.findall(r'\d+', advertisement.name)
     if property_area:
-        if advertisement.category == 'Гаражи и машиноместа':
+        if advertisement.category in ['Гаражи и машиноместа', 'Дома, дачи, коттеджи']:
             return int(property_area[0])
         elif advertisement.category == 'Земельные участки':
             return int(property_area[0])*100*100
+        else:
+            raise ValueError('Не известная категория')
 
 
 def create_parameter(advertisement: Ad_avito):
@@ -155,10 +159,16 @@ def get_property_type_id(property_type: str) -> int:
         return property_type_id.get().id
 
 
-def get_list_property_type() -> list[tuple]:
+def get_list_property_type(category_id: int = None) -> list[tuple]:
     """Получить список кортежей с id и типами недвижимости"""
-    list_property_type = [(p.id, p.property_type) for p in Property_type.select(Property_type.id,
-                                                                                Property_type.property_type)]
+    if category_id is None:
+        property_types = Property_type.select(Property_type.id, Property_type.property_type)
+    else:
+        property_types = Property_type.select(Property_type.id, Property_type.property_type).distinct().\
+            join(Parameter).\
+            join(Advertisement).\
+            where(Advertisement.category_id == category_id)
+    list_property_type = [(p.id, p.property_type) for p in property_types]
     return list_property_type
 
 
