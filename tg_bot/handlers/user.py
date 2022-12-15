@@ -272,7 +272,7 @@ async def add_parameter_property_area_max(message: types.Message, state: FSMCont
         async with state.proxy() as data:
             data['parameter_property_area_max'] = parameter_property_area_max
         await FSMUser.next()
-        text = 'Введите минимальную доходность при сдаче в аренду'
+        text = 'Введите минимальную желаемую доходность при сдаче в аренду'
     except ValueError:
         text = 'Площадь введена не корректно. Введите максимальную площадь повторно'
     await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
@@ -288,7 +288,7 @@ async def add_profitability_rent(message: types.Message, state: FSMContext):
         async with state.proxy() as data:
             data['profitability_rent'] = profitability_rent
         await FSMUser.next()
-        text = 'Введите минимальную доходность при перепродаже недвижимости'
+        text = 'Введите минимальную желаемую прибыль при перепродаже недвижимости'
     except ValueError:
         text = 'Доходность введена не корректно. Введите минимальную доходность при сдаче в аренду повторно'
     await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
@@ -306,7 +306,7 @@ async def add_profitability_sale(message: types.Message, state: FSMContext):
             add_filter(params=data)
         text = 'Фильтр успешно создан'
     except ValueError:
-        text = 'Доходность введена не корректно. Введите минимальную доходность при перепродаже недвижимости повторно'
+        text = 'Доходность введена не корректно. Введите минимальную прибыль при перепродаже недвижимости повторно'
     await state.finish()
     await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_stop)
 
