@@ -1,5 +1,6 @@
 from peewee import Expression, JOIN
-from db.handlers_advertisement import get_parameters_in_dict, get_property_area_from_advertisement
+from db.handlers_advertisement import get_parameters_in_dict, get_property_area_from_advertisement, \
+    get_property_type_from_advertisement
 from db.models import Filter, Type_transaction, Category, Property_type
 from parsers.avito_parser import Advertisement
 
@@ -37,16 +38,17 @@ def get_search_term_by_distance(coords_lat: float, coords_lng: float) -> Express
 def get_users_id_after_check_filters(advertisement: Advertisement,
                                      profitability_rent: int = 0,
                                      profitability_sale: int = 0) -> list[int]:
-    property_type = get_parameters_in_dict(advertisement.parameters)['property_type']
+    property_type = get_property_type_from_advertisement(advertisement)
     property_area = get_property_area_from_advertisement(advertisement)
     expression_for_distance = get_search_term_by_distance(advertisement.coords_lat, advertisement.coords_lng)
     filters = Filter.select(Filter.user_id).distinct().\
         join(Type_transaction, on=(Filter.type_transaction_id == Type_transaction.id)).\
         join(Category, on=(Filter.category_id == Category.id)).\
-        join(Property_type, on=(Filter.property_type_id == Property_type.id)).\
+        join(Property_type, JOIN.LEFT_OUTER, on=(Filter.property_type_id == Property_type.id)).\
         where((Filter.category_id.category == advertisement.category) &
               (Filter.type_transaction_id.type_transaction == advertisement.type_transaction) &
-              (Filter.property_type_id.property_type == property_type) &
+              ((Filter.property_type_id.property_type == property_type) |
+               (Filter.property_type_id >> None)) &
               (Filter.min_price <= advertisement.price) &
               (Filter.max_price >= advertisement.price) &
               (Filter.parameter_property_area_min <= property_area) &

@@ -26,8 +26,8 @@ def main():
     log()
     urls = [
             # 'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
-            # 'https://www.avito.ru/kazan/zemelnye_uchastki',
-            'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
+            'https://www.avito.ru/kazan/zemelnye_uchastki',
+            # 'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
             ]
     # db.connect()
     # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter])
@@ -56,7 +56,7 @@ def main():
             deactivation_advertisement()
         except Exception as ex:
             logging.error(f'Неудачная попытка парсинга авито, {ex}')
-            logging.exception()
+            logging.exception('')
 
 
 if __name__ == '__main__':

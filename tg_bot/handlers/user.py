@@ -234,7 +234,7 @@ async def add_search_radius(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
         if message.text == '/Пропустить':
-            search_radius = 10000000
+            search_radius = 9000000
         else:
             search_radius = int(message.text)
         async with state.proxy() as data:
