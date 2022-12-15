@@ -82,7 +82,7 @@ class AvitoParser(Parser):
         """Генератор ссылок на последующие страницы поисковой выдачи"""
         page = 2
         for i in range(50, self.count_advertisements, 50):
-            url_page = f'{self.url}&p={page}'
+            url_page = f'{self.url}?p={page}'
             logging.info(f'Получено ссылок {page} из {self.count_pages}')
             yield url_page
             page += 1
@@ -92,12 +92,16 @@ class AvitoParser(Parser):
         for item in self.params['data']['catalog']['items']:
             try:
                 if 'kuplyu' in item['urlPath'] or 'snimu' in item['urlPath']:
-                    logging.debug(f'Пропущено объявление с типом сделки куплю/сниму: {advertisement.url}')
+                    logging.debug(f'Пропущено объявление с типом сделки куплю/сниму: '
+                                  f'https://www.avito.ru{item["urlPath"]}')
                     continue
+                name = item['title'].replace(' ', ' ')
+                if name == '':
+                    raise ValueError
                 advertisement = Advertisement(
                     id_avito=item['id'],
                     url='https://www.avito.ru' + item['urlPath'],
-                    name=item['title'].replace(' ', ' '),
+                    name=name,
                     description=self._get_description(item),
                     category=item['category']['name'],
                     location=item['location']['name'],
@@ -120,13 +124,15 @@ class AvitoParser(Parser):
                 if item.get('code'):
                     continue
                 logging.error(f'Не найден ключ при разборе json полученного с {self.url}')
+            except ValueError:
+                logging.error(f'У объявления нет названия {self.url}')
+                continue
 
     def _get_description(self, item):
         try:
             return item['description'].replace(' ', ' ').replace('\n', ' ').strip()
         except AttributeError:
             return ''
-
 
     def _get_type_transaction(self, postfix: str) -> str:
         if postfix == '':
@@ -135,7 +141,6 @@ class AvitoParser(Parser):
             return 'Снять на месяц'
         elif 'сутки' in postfix:
             return 'Снять на день'
-
 
     def _get_georeferences(self, item: dict) -> list[dict[str, str]]:
         geoReferences = []
@@ -150,7 +155,10 @@ class AvitoParser(Parser):
 
     def _get_parametrs_advertisement(self, item: dict) -> str:
         # возможно стоит убрать 0 если много параметров
-        parametrs_advertisement = item['iva']['AutoParamsStep'][0]['payload']['text']
+        try:
+            parametrs_advertisement = item['iva']['AutoParamsStep'][0]['payload']['text']
+        except IndexError:
+            return ''
         if parametrs_advertisement is None:
             return ''
         return parametrs_advertisement

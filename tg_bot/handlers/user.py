@@ -27,6 +27,11 @@ class FSMUser(StatesGroup):
     profitability_sale = State()
 
 
+async def sending_messages_users(users_id: list[int], message: str):
+    for user_id in users_id:
+        await bot.send_message(chat_id=user_id, text=message)
+
+
 async def add_new_user_and_activate(message: types.Message):
     user_id = message.from_user.id
     text = create_user(user_id=user_id)
@@ -270,7 +275,8 @@ async def cancel(message: types.Message, state: FSMContext):
 
 
 def register_handlers_user(dispatcher: Dispatcher):
-    dispatcher.register_message_handler(add_new_user_and_activate, commands=['start', 'Активировать_рассылку'], state=None)
+    dispatcher.register_message_handler(add_new_user_and_activate,
+                                        commands=['start', 'Активировать_рассылку'], state=None)
     dispatcher.register_message_handler(deactivate_user, commands=['Деактивировать_рассылку'], state=None)
     dispatcher.register_message_handler(create_filter, commands=['Создать_новый_фильтр'], state=None)
     dispatcher.register_message_handler(show_filters, commands=['Показать_все_фильтры'], state=None)
@@ -279,7 +285,8 @@ def register_handlers_user(dispatcher: Dispatcher):
     dispatcher.register_message_handler(add_name_filter, state=FSMUser.name_filter)
     dispatcher.register_callback_query_handler(add_type_transaction_id, state=FSMUser.type_transaction_id)
     dispatcher.register_callback_query_handler(add_category_id, state=FSMUser.category_id)
-    dispatcher.register_callback_query_handler(add_parameter_property_type_id, state=FSMUser.parameter_property_type_id)
+    dispatcher.register_callback_query_handler(add_parameter_property_type_id,
+                                               state=FSMUser.parameter_property_type_id)
     dispatcher.register_message_handler(add_min_price, state=FSMUser.min_price)
     dispatcher.register_message_handler(add_max_price, state=FSMUser.max_price)
     dispatcher.register_message_handler(add_coords, state=FSMUser.coords)

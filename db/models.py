@@ -28,7 +28,7 @@ class Property_type(BaseModel):
 
 class Parameter(BaseModel):
     property_type_id = ForeignKeyField(Property_type)
-    security = BooleanField()
+    security = BooleanField(null=True)
     property_area = IntegerField(null=True)
 
 
@@ -91,8 +91,3 @@ class Filter(BaseModel):
     parameter_property_area_max = IntegerField(null=True)
     profitability_rent = IntegerField(null=True)
     profitability_sale = IntegerField(null=True)
-
-
-
-
-

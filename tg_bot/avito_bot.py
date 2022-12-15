@@ -1,16 +1,12 @@
+#!/usr/bin/env python
 from aiogram.utils import executor
 from tg_bot.create_bot import dp, bot
 from tg_bot.handlers import user
 
 
 async def on_startup(_):
-    print('Бот вышел в онлайн')
-
-
-async def sending_messages(message: str):
-    user_id = 1371107249
-    print(user_id)
-    await bot.send_message(chat_id=user_id, text=message)
+    pass
+    # print('Бот вышел в онлайн')
 
 
 if __name__ == '__main__':
