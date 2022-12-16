@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import asyncio
 import logging
+import time
+
 from db.hendlers_filter import get_users_id_after_check_filters
 from db.models import *
 from db.handlers_advertisement import set_advertisement, deactivation_advertisement, get_profitability_sale, \
@@ -25,9 +27,9 @@ def log():
 def main():
     log()
     urls = [
-            # 'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
+            'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
             'https://www.avito.ru/kazan/zemelnye_uchastki',
-            # 'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
+            'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
             ]
     # db.connect()
     # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter])
@@ -53,10 +55,15 @@ def main():
                                                                 profitability_sale=profitability_sale)
                     if users_id:
                         asyncio.run(sending_messages_users(users_id=users_id, message=message))
-            deactivation_advertisement()
         except Exception as ex:
             logging.error(f'Неудачная попытка парсинга авито, {ex}')
             logging.exception('')
+        finally:
+            del parser
+    try:
+        deactivation_advertisement()
+    except Exception as ex:
+        logging.exception(ex)
 
 
 if __name__ == '__main__':

@@ -162,7 +162,7 @@ async def next_parameter_property_type_id(message: types.Message, state: FSMCont
 async def add_min_price(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             min_price = 0
         else:
             min_price = int(message.text)
@@ -178,7 +178,7 @@ async def add_min_price(message: types.Message, state: FSMContext):
 async def add_max_price(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             max_price = 9000000000
         else:
             max_price = int(message.text)
@@ -194,7 +194,7 @@ async def add_max_price(message: types.Message, state: FSMContext):
 async def add_coords(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     geolocator = Nominatim(user_agent='avito_parser')
-    if message.text == '/Пропустить':
+    if message.text == 'Пропустить':
         location_text = 'Казань'
     else:
         location_text = message.text
@@ -226,14 +226,15 @@ async def check_coords(call: types.CallbackQuery):
         text = 'Введите адрес для поиска заново'
     else:
         text = 'Используйте инлайн кнопки'
-    await call.message.answer(text=text)
+    user_id = call.from_user['id']
+    await bot.send_message(chat_id=user_id, text=text, reply_markup=kb_cancel_and_next)
     await call.answer()
 
 
 async def add_search_radius(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             search_radius = 9000000
         else:
             search_radius = int(message.text)
@@ -249,7 +250,7 @@ async def add_search_radius(message: types.Message, state: FSMContext):
 async def add_parameter_property_area_min(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             parameter_property_area_min = 0
         else:
             parameter_property_area_min = int(message.text)
@@ -265,7 +266,7 @@ async def add_parameter_property_area_min(message: types.Message, state: FSMCont
 async def add_parameter_property_area_max(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             parameter_property_area_max = 9000000000
         else:
             parameter_property_area_max = int(message.text)
@@ -281,7 +282,7 @@ async def add_parameter_property_area_max(message: types.Message, state: FSMCont
 async def add_profitability_rent(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             profitability_rent = 0
         else:
             profitability_rent = int(message.text)
@@ -297,7 +298,7 @@ async def add_profitability_rent(message: types.Message, state: FSMContext):
 async def add_profitability_sale(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     try:
-        if message.text == '/Пропустить':
+        if message.text == 'Пропустить':
             profitability_sale = 0
         else:
             profitability_sale = int(message.text)
@@ -319,20 +320,20 @@ async def cancel(message: types.Message, state: FSMContext):
 
 
 def register_handlers_user(dispatcher: Dispatcher):
-    dispatcher.register_message_handler(add_new_user_and_activate,
-                                        commands=['start', 'Активировать_рассылку'], state=None)
-    dispatcher.register_message_handler(deactivate_user, commands=['Деактивировать_рассылку'], state=None)
-    dispatcher.register_message_handler(create_filter, commands=['Создать_новый_фильтр'], state=None)
-    dispatcher.register_message_handler(show_filters, commands=['Показать_все_фильтры'], state=None)
+    dispatcher.register_message_handler(add_new_user_and_activate, commands=['start'], state=None)
+    dispatcher.register_message_handler(add_new_user_and_activate, Text(equals='Активировать рассылку'), state=None)
+    dispatcher.register_message_handler(deactivate_user, Text(equals='Деактивировать рассылку'), state=None)
+    dispatcher.register_message_handler(create_filter, Text(equals='Создать новый фильтр'), state=None)
+    dispatcher.register_message_handler(show_filters, Text(equals='Показать все фильтры'), state=None)
     dispatcher.register_callback_query_handler(del_filter, Text(startswith='del_'))
-    dispatcher.register_message_handler(cancel, commands=['Отменить'], state="*")
+    dispatcher.register_message_handler(cancel, Text(equals='Отменить'), state="*")
     dispatcher.register_message_handler(add_name_filter, state=FSMUser.name_filter)
     dispatcher.register_callback_query_handler(add_type_transaction_id, state=FSMUser.type_transaction_id)
     dispatcher.register_callback_query_handler(add_category_id, state=FSMUser.category_id)
     dispatcher.register_callback_query_handler(add_parameter_property_type_id,
                                                state=FSMUser.parameter_property_type_id)
     dispatcher.register_message_handler(next_parameter_property_type_id,
-                                        commands=['Пропустить'], state=FSMUser.parameter_property_type_id)
+                                        Text(equals='Пропустить'), state=FSMUser.parameter_property_type_id)
     dispatcher.register_message_handler(add_min_price, state=FSMUser.min_price)
     dispatcher.register_message_handler(add_max_price, state=FSMUser.max_price)
     dispatcher.register_message_handler(add_coords, state=FSMUser.coords)

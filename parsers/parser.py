@@ -50,8 +50,8 @@ class Parser:
             raise Exception()
 
     def __del__(self):
-        self.driver.close()
-        # self.driver.quit()
+        # self.driver.close()
+        self.driver.quit()
         logging.info(f'Браузер закрыт')
 
     def get_html_elm(self, elm: WebElement) -> str:

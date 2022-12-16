@@ -176,7 +176,8 @@ class AvitoParser(Parser):
                 for advertisement in self.get_advertisements_from_one_page():
                     yield advertisement
             except:
-                continue
+                raise Exception
+                # continue
 
     def open_new_page(self, *args, **kwargs):
         """Дополнительно получаем параметры со страницы"""
