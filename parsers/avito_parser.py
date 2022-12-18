@@ -70,6 +70,9 @@ class AvitoParser(Parser):
         """Получить количество объявлений в поисковой выдаче"""
         count_advertisements = self.params['data']['count']
         logging.info(f'Всего: {count_advertisements} объявлений')
+        if count_advertisements > 2500:
+            logging.warning(f'Будет показано: {count_advertisements} объявлений')
+            count_advertisements = 2500
         return count_advertisements
 
     def get_count_pages(self) -> int:
