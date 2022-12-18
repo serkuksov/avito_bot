@@ -2,13 +2,13 @@
 import asyncio
 import logging
 import time
-
+import requests
+from config import TOKEN
 from db.hendlers_filter import get_users_id_after_check_filters
 from db.models import *
 from db.handlers_advertisement import set_advertisement, deactivation_advertisement, get_profitability_sale, \
     get_profitability_rent
 from parsers.avito_parser import AvitoParser
-from tg_bot.handlers.user import sending_messages_users
 
 
 def log():
@@ -22,6 +22,20 @@ def log():
     root_logger.addHandler(handler)
     logging.getLogger("selenium").setLevel(logging.ERROR)
     logging.getLogger("webdriver_manager").setLevel(logging.ERROR)
+
+
+def sending_messages_users(users_id: list[int], message: str):
+    """Отправка сообщений в ТГ"""
+    for user_id in users_id:
+        url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
+        print(url)
+        data = {'chat_id': user_id,
+                'text': message}
+        r = requests.post(url=url, data=data)
+        if r.status_code != 200:
+            logging.error('Не удалось отправить сообщение в телеграмм')
+        else:
+            logging.info(f'Сообщение пользователю с id={user_id} направлено')
 
 
 def main():
@@ -54,7 +68,7 @@ def main():
                                                                 profitability_rent=profitability_rent,
                                                                 profitability_sale=profitability_sale)
                     if users_id:
-                        asyncio.run(sending_messages_users(users_id=users_id, message=message))
+                        sending_messages_users(users_id=users_id, message=message)
         except Exception as ex:
             logging.error(f'Неудачная попытка парсинга авито, {ex}')
             logging.exception('')
