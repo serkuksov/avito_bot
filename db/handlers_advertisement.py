@@ -5,7 +5,7 @@ from peewee import Expression
 from db.models import *
 from parsers.avito_parser import Advertisement as Ad_avito
 
-SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE = 2500
+SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE = 2000
 
 # def get_property_area(name: str) -> int:
 #     property_area = re.findall(r'\d+', name)
@@ -100,7 +100,7 @@ def create_advertisement(advertisement: Ad_avito):
     for image in advertisement.images:
         Image.create(image_url=image, advertisement_id=ad)
     message = f'Добавлено новое объявление {advertisement.url} с ценой {advertisement.price}.'
-    logging.info(message)
+    logging.debug(message)
     return message
 
 
@@ -183,10 +183,10 @@ def set_modification_price(price: int, date: datetime, advertisement: Advertisem
     Возвращает сообщение об успехе"""
     old_price = Price.select().where(Price.advertisement_id == advertisement.id).order_by(
         Price.date_update.desc()).get().price
-    if old_price != price:
+    if old_price < price:
         Price.create(price=price, date_update=date, advertisement_id=advertisement.id)
         message = f'Изменение цены для {advertisement.url} c {old_price} до {price}.'
-        logging.info(message)
+        logging.debug(message)
         return message
 
 
@@ -200,7 +200,7 @@ def set_advertisement(advertisement: Ad_avito) -> str:
         ad.date_update = datetime.datetime.now()
         if not ad.activated:
             ad.activated = True
-            logging.info(f'Объявление {ad.url} активировано')
+            logging.debug(f'Объявление {ad.url} активировано')
         ad.save()
     else:
         message = create_advertisement(advertisement=advertisement)
@@ -213,7 +213,7 @@ def deactivation_advertisement():
     deactivation_list = Advertisement.select(). \
         where((Advertisement.date_update < date_update) & Advertisement.activated)
     for elm in deactivation_list:
-        logging.info(f'Объявление {elm.url} снято')
+        logging.debug(f'Объявление {elm.url} снято')
         elm.activated = False
         elm.save()
 

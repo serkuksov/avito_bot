@@ -13,7 +13,7 @@ from parsers.avito_parser import AvitoParser
 
 def log():
     """Логирование скрипта в консоль и файл"""
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s %(message)s')
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     handler = logging.FileHandler('Протокол.log', 'a', 'utf-8')
@@ -74,6 +74,7 @@ def main():
             logging.exception('')
         finally:
             del parser
+        time.sleep(20)
     try:
         deactivation_advertisement()
     except Exception as ex:
@@ -81,4 +82,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        exit()

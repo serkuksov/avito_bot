@@ -64,6 +64,6 @@ class Parser:
 
     def open_new_page(self, url: str) -> None:
         """Метод открывает новую страницу в браузере"""
-        logging.info(f'Открываю страницу: {url}')
+        logging.debug(f'Открываю страницу: {url}')
         self.driver.get(url)
         time.sleep(self.timeout)
