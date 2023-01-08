@@ -56,7 +56,8 @@ def main():
                 try:
                     message = set_advertisement(advertisement)
                 except Exception as ex:
-                    logging.error(f'Не удалось записать объявление в базу. Ошибка: {ex}')
+                    logging.error(f'Не удалось записать объявление в базу. Ошибка: {ex} для {advertisement.url}')
+                    raise
                     continue
                 # todo необходимо формирование сообщений вынести в отдельныей файл
                 if message:

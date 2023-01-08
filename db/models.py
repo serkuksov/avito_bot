@@ -72,7 +72,7 @@ class Characteristics_set_for_advertisement(BaseModel):
     characteristic_value_id = ForeignKeyField(Characteristic_value)
 
     class Meta:
-        primary_key = CompositeKey('advertisement_id', 'characteristic_id', 'characteristic_values_id')
+        primary_key = CompositeKey('advertisement_id', 'characteristic_id', 'characteristic_value_id')
 
 
 class Image(BaseModel):

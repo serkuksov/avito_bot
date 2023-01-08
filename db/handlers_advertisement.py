@@ -19,9 +19,9 @@ def get_parameters_in_dict(parameters: str) -> dict:
     params = parameters.split(', ')
     dict_params['property_type'] = params[0]
     if len(params) > 1:
-        security = True
+        security = 'есть'
     else:
-        security = False
+        security = 'нет'
     dict_params['security'] = security
     return dict_params
 
@@ -55,6 +55,8 @@ def get_property_area_from_advertisement(advertisement: Ad_avito) -> int:
             return int(property_area[0])*100*100
         else:
             raise ValueError('Не известная категория')
+    else:
+        return 0
 
 
 def create_parameter(advertisement: Ad_avito):
@@ -73,18 +75,18 @@ def get_characteristics_from_advertisement(advertisement: Ad_avito) -> dict[str,
     if advertisement.category == 'Гаражи и машиноместа':
         characteristics = {
             'Тип недвижимости': get_parameters_in_dict(advertisement.parameters)['property_type'],
-            'Площадь': re.findall(r'\d+', advertisement.name)[0],
+            'Площадь': str(get_property_area_from_advertisement(advertisement=advertisement)),
             'Охрана': get_parameters_in_dict(advertisement.parameters)['security'],
         }
     elif advertisement.category == 'Земельные участки':
         characteristics = {
             'Тип недвижимости': re.findall(r'\((.+)\)', advertisement.name)[0],
-            'Площадь': str(int(re.findall(r'\d+', advertisement.name)[0])*100*100),
+            'Площадь': str(get_property_area_from_advertisement(advertisement=advertisement)),
         }
     elif advertisement.category == 'Дома, дачи, коттеджи':
         characteristics = {
             'Тип недвижимости': advertisement.name.split(' ')[0],
-            'Площадь': re.findall(r'\d+', advertisement.name)[0],
+            'Площадь': str(get_property_area_from_advertisement(advertisement=advertisement)),
         }
     else:
         raise ValueError('Не известная категория')
@@ -99,12 +101,11 @@ def create_set_characteristics(advertisement: Ad_avito, advertisement_id: int):
         if characteristic_id is None:
             characteristic_id = create_characteristic(characteristic=characteristic)
         characteristic_value_id = get_characteristic_value_id(characteristic_value=characteristic_value)
-        if characteristic_id is None:
-            characteristic_value_id = create_characteristic_value_id(characteristic_value=characteristic_value)
+        if characteristic_value_id is None:
+            characteristic_value_id = create_characteristic_value(characteristic_value=characteristic_value)
         Characteristics_set_for_advertisement.create(advertisement_id=advertisement_id,
                                                      characteristic_id=characteristic_id,
-                                                     characteristic_values_id=characteristic_value_id
-                                                     )
+                                                     characteristic_value_id=characteristic_value_id)
         logging.debug(f'Добавлена характеристика {characteristic} - {characteristic_value} для {advertisement.url}')
 
 
@@ -134,8 +135,8 @@ def create_advertisement(advertisement: Ad_avito):
         coords_lat=advertisement.coords_lat,
         coords_lng=advertisement.coords_lng
     )
-    create_set_characteristics(advertisement=advertisement, advertisement_id=ad.id)
     ad.save()
+    create_set_characteristics(advertisement=advertisement, advertisement_id=ad.id)
     Price.create(price=advertisement.price, advertisement_id=ad)
     for image in advertisement.images:
         Image.create(image_url=image, advertisement_id=ad)
@@ -165,27 +166,27 @@ def create_category(category: str) -> int:
 
 def get_characteristic_id(characteristic: str) -> int:
     """Получить id характеристики, если нет вернуть None"""
-    characteristic_id = Category.select().where(Characteristic.name == characteristic)
+    characteristic_id = Characteristic.select().where(Characteristic.name == characteristic)
     if characteristic_id.exists():
         return characteristic_id.get().id
 
 
 def create_characteristic(characteristic: str) -> int:
     """Создать новую характеристику и вернуть id"""
-    characteristic_id = Characteristic.create(characteristic=characteristic).id
+    characteristic_id = Characteristic.create(name=characteristic).id
     return characteristic_id
 
 
 def get_characteristic_value_id(characteristic_value: str) -> int:
     """Получить id значения характеристики, если нет вернуть None"""
-    characteristic_value_id = Category.select().where(Characteristic_value.name == characteristic_value)
+    characteristic_value_id = Characteristic_value.select().where(Characteristic_value.name == characteristic_value)
     if characteristic_value_id.exists():
         return characteristic_value_id.get().id
 
 
 def create_characteristic_value(characteristic_value: str) -> int:
     """Создать новое значение характеристики и вернуть id"""
-    characteristic_value_id = Characteristic_value.create(characteristic_value=characteristic_value).id
+    characteristic_value_id = Characteristic_value.create(name=characteristic_value).id
     return characteristic_value_id
 
 
