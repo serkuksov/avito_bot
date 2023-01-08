@@ -62,14 +62,14 @@ class Characteristic(BaseModel):
     name = CharField()
 
 
-class Characteristic_values(BaseModel):
+class Characteristic_value(BaseModel):
     name = CharField()
 
 
 class Characteristics_set_for_advertisement(BaseModel):
     advertisement_id = ForeignKeyField(Advertisement)
     characteristic_id = ForeignKeyField(Characteristic)
-    characteristic_values_id = ForeignKeyField(Characteristic_values)
+    characteristic_value_id = ForeignKeyField(Characteristic_value)
 
     class Meta:
         primary_key = CompositeKey('advertisement_id', 'characteristic_id', 'characteristic_values_id')
