@@ -7,6 +7,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.remote.webelement import WebElement
 
 
+#TODO заменить клас парсера. ыполнитеть методы получения элементов с выдержкой по времени
 class Parser:
     """Открывает браузер (хром) заходит на сайт"""
     def __init__(self, url, login=None, password=None, timeout=2):

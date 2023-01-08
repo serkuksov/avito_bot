@@ -57,6 +57,7 @@ def main():
                 except Exception as ex:
                     logging.error(f'Не удалось записать объявление в базу. Ошибка: {ex}')
                     continue
+                # todo необходимо формирование сообщений вынести в отдельныей файл
                 if message:
                     profitability_rent = get_profitability_rent(advertisement)
                     profitability_sale = get_profitability_sale(advertisement)
