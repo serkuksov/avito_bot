@@ -1,6 +1,6 @@
 import datetime
 from peewee import SqliteDatabase, Model, TextField, DateTimeField, PrimaryKeyField, CharField, \
-    IntegerField, BooleanField, FloatField, ForeignKeyField
+    IntegerField, BooleanField, FloatField, ForeignKeyField, CompositeKey
 
 db = SqliteDatabase('/home/sergei/PycharmProjects/avito_bot/parser.db')
 
@@ -56,6 +56,23 @@ class Advertisement(BaseModel):
     class Meta:
         table_name = 'Advertisements'
         order_by = 'id'
+
+
+class Characteristic(BaseModel):
+    name = CharField()
+
+
+class Characteristic_values(BaseModel):
+    name = CharField()
+
+
+class Characteristics_set_for_advertisement(BaseModel):
+    advertisement_id = ForeignKeyField(Advertisement)
+    characteristic_id = ForeignKeyField(Characteristic)
+    characteristic_values_id = ForeignKeyField(Characteristic_values)
+
+    class Meta:
+        primary_key = CompositeKey('advertisement_id', 'characteristic_id', 'characteristic_values_id')
 
 
 class Image(BaseModel):

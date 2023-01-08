@@ -46,7 +46,8 @@ def main():
             'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
             ]
     # db.connect()
-    # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter])
+    # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter,
+    #                   Characteristic, Characteristic_values, Characteristics_set_for_advertisement])
     # db.close()
     for url in urls:
         try:
