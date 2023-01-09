@@ -46,7 +46,7 @@ class Advertisement(BaseModel):
     phone = BooleanField()
     delivery = BooleanField()
     message = BooleanField()
-    parameter_id = ForeignKeyField(Parameter)
+    parameter_id = ForeignKeyField(Parameter, null=True)
     coords_lat = FloatField()
     coords_lng = FloatField()
     date_creation = DateTimeField(default=datetime.datetime.now)

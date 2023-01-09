@@ -43,7 +43,9 @@ def main():
     urls = [
             'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
             'https://www.avito.ru/kazan/zemelnye_uchastki',
-            'https://www.avito.ru/kazan/doma_dachi_kottedzhi'
+            'https://www.avito.ru/kazan/doma_dachi_kottedzhi',
+            'https://www.avito.ru/kazan/kvartiry/prodam-ASgBAgICAUSSA8YQ',
+            'https://www.avito.ru/kazan/kvartiry/sdam-ASgBAgICAUSSA8gQ',
             ]
     # db.connect()
     # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter,
@@ -57,7 +59,7 @@ def main():
                     message = set_advertisement(advertisement)
                 except Exception as ex:
                     logging.error(f'Не удалось записать объявление в базу. Ошибка: {ex} для {advertisement.url}')
-                    raise
+                    # raise
                     continue
                 # todo необходимо формирование сообщений вынести в отдельныей файл
                 if message:
@@ -66,7 +68,7 @@ def main():
                     if advertisement.type_transaction == 'Купить':
                         message += f'\nОжидаемая доходность аренды {profitability_rent} %.\n' \
                                    f'Ожидаемая доходность продажи {profitability_sale} %.'
-                        print(message)
+                    print(message)
                     users_id = get_users_id_after_check_filters(advertisement,
                                                                 profitability_rent=profitability_rent,
                                                                 profitability_sale=profitability_sale)

@@ -71,13 +71,13 @@ class AvitoParser(Parser):
         count_advertisements = self.params['data']['count']
         logging.info(f'Всего: {count_advertisements} объявлений')
         if count_advertisements > 5000:
-            logging.warning(f'Будет показано: {count_advertisements} объявлений')
+            logging.warning(f'Будет показано: {5000} объявлений')
             count_advertisements = 5000
         return count_advertisements
 
     def get_count_pages(self) -> int:
         """Получить количество страниц в поисковой выдаче"""
-        count_pages = self.count_advertisements // 50 + 1
+        count_pages = self.count_advertisements // 50
         logging.info(f'Всего: {count_pages} страниц')
         return count_pages
 
@@ -179,8 +179,9 @@ class AvitoParser(Parser):
                 for advertisement in self.get_advertisements_from_one_page():
                     yield advertisement
             except:
-                raise Exception
-                # continue
+                # raise Exception
+                time.sleep(5)
+                continue
 
     def open_new_page(self, *args, **kwargs):
         """Дополнительно получаем параметры со страницы"""

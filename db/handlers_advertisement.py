@@ -33,8 +33,10 @@ def get_property_type_from_advertisement(advertisement: Ad_avito) -> str:
         property_type = re.findall(r'\((.+)\)', advertisement.name)[0]
     elif advertisement.category == 'Дома, дачи, коттеджи':
         property_type = advertisement.name.split(' ')[0]
+    elif advertisement.category == 'Квартиры':
+        property_type = advertisement.name.split(', ')[0]
     else:
-        raise ValueError('Не известная категория')
+        raise ValueError('Не корректный тип недвижимости')
     return property_type
 
 
@@ -53,6 +55,8 @@ def get_property_area_from_advertisement(advertisement: Ad_avito) -> int:
             return int(property_area[0])
         elif advertisement.category == 'Земельные участки':
             return int(property_area[0])*100*100
+        elif advertisement.category == 'Квартиры':
+            return int(re.findall(r'\d+', advertisement.name.split(', ')[1])[0])
         else:
             raise ValueError('Не известная категория')
     else:
@@ -60,15 +64,16 @@ def get_property_area_from_advertisement(advertisement: Ad_avito) -> int:
 
 
 def create_parameter(advertisement: Ad_avito):
-    """Добавляет параметры нового объявления"""
-    property_type = get_property_type_from_advertisement(advertisement)
-    property_type_id = get_property_type_id(property_type)
-    if property_type_id is None:
-        property_type_id = create_property_type(property_type)
-    security = get_security_from_advertisement(advertisement)
-    property_area = get_property_area_from_advertisement(advertisement)
-    parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area, security=security)
-    return parameter_id
+    """Добавляет параметры нового объявления если это недвижимость"""
+    if advertisement.category in ['Гаражи и машиноместа', 'Дома, дачи, коттеджи', 'Земельные участки', 'Квартиры']:
+        property_type = get_property_type_from_advertisement(advertisement)
+        property_type_id = get_property_type_id(property_type)
+        if property_type_id is None:
+            property_type_id = create_property_type(property_type)
+        security = get_security_from_advertisement(advertisement)
+        property_area = get_property_area_from_advertisement(advertisement)
+        parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area, security=security)
+        return parameter_id
 
 
 def get_characteristics_from_advertisement(advertisement: Ad_avito) -> dict[str, str]:
@@ -86,6 +91,11 @@ def get_characteristics_from_advertisement(advertisement: Ad_avito) -> dict[str,
     elif advertisement.category == 'Дома, дачи, коттеджи':
         characteristics = {
             'Тип недвижимости': advertisement.name.split(' ')[0],
+            'Площадь': str(get_property_area_from_advertisement(advertisement=advertisement)),
+        }
+    elif advertisement.category == 'Квартиры':
+        characteristics = {
+            'Тип недвижимости': advertisement.name.split(', ')[0],
             'Площадь': str(get_property_area_from_advertisement(advertisement=advertisement)),
         }
     else:
