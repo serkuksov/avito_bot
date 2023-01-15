@@ -260,7 +260,7 @@ def set_modification_price(price: int, date: datetime, advertisement: Advertisem
     Возвращает сообщение об успехе"""
     old_price = Price.select().where(Price.advertisement_id == advertisement.id).order_by(
         Price.date_update.desc()).get().price
-    if old_price < price:
+    if old_price > price:
         Price.create(price=price, date_update=date, advertisement_id=advertisement.id)
         message = f'Изменение цены для {advertisement.url} c {old_price} до {price}.'
         logging.debug(message)
