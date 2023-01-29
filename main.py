@@ -41,12 +41,20 @@ def sending_messages_users(users_id: list[int], message: str):
 def main():
     log()
     urls = [
-            'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
-            'https://www.avito.ru/kazan/zemelnye_uchastki',
-            'https://www.avito.ru/kazan/doma_dachi_kottedzhi',
-            'https://www.avito.ru/kazan/kvartiry/prodam-ASgBAgICAUSSA8YQ',
-            'https://www.avito.ru/kazan/kvartiry/sdam-ASgBAgICAUSSA8gQ',
-            ]
+        # 'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
+        # 'https://www.avito.ru/kazan/zemelnye_uchastki',
+        # 'https://www.avito.ru/kazan/doma_dachi_kottedzhi',
+        # 'https://www.avito.ru/kazan/kvartiry/prodam-ASgBAgICAUSSA8YQ',
+        # 'https://www.avito.ru/kazan/kvartiry/sdam-ASgBAgICAUSSA8gQ',
+        'https://www.avito.ru/all/garazhi_i_mashinomesta?s=104',
+        'https://www.avito.ru/all/kvartiry/prodam/studii-ASgBAQICAUSSA8YQAUDKCBT~WA?cd=1&s=104',
+        'https://www.avito.ru/all/kvartiry/prodam/1-komnatnye/vtorichka-ASgBAQICAUSSA8YQAkDmBxSMUsoIFIBZ?cd=1&s=104',
+        'https://www.avito.ru/all/kvartiry/prodam/1-komnatnye/novostroyka-ASgBAQICAUSSA8YQAkDmBxSOUsoIFIBZ?cd=1&s=104',
+        'https://www.avito.ru/all/kvartiry/prodam/2-komnatnye/vtorichka-ASgBAQICAUSSA8YQAkDmBxSMUsoIFIJZ?cd=1&s=104',
+        'https://www.avito.ru/all/kvartiry/prodam/2-komnatnye/novostroyka-ASgBAQICAUSSA8YQAkDmBxSOUsoIFIJZ?cd=1&s=104',
+        'https://www.avito.ru/all/kvartiry/prodam/3-komnatnye-ASgBAQICAUSSA8YQAUDKCBSEWQ?cd=1&s=104',
+        'https://www.avito.ru/all/kvartiry/sdam/na_dlitelnyy_srok-ASgBAgICAkSSA8gQ8AeQUg?cd=1&s=104',
+    ]
     # db.connect()
     # db.create_tables([Advertisement, Image, Price, Category, Location, Property_type, Parameter, User_tg, Filter,
     #                   Characteristic, Characteristic_values, Characteristics_set_for_advertisement])
