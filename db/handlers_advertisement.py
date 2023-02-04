@@ -376,6 +376,15 @@ def get_profitability_sale(advertisement: Ad_avito):
         return 0
 
 
+def get_links_location(herf: str) -> list:
+    advertisements = Advertisement.select(Advertisement.url).group_by(Advertisement.location_id)
+    links = []
+    for advertisement in advertisements:
+        location = advertisement.url.split('/')[3]
+        links.append(f'https://www.avito.ru/{location}/{herf}')
+    return links
+
+
 # if __name__ == "__main__":
 #     # print(get_search_term_by_parameters(['df', 'fff']))
 #     delta = 150000
