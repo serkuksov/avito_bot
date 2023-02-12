@@ -1,11 +1,15 @@
+import pprint
 import re
 import logging
 import statistics
+from operator import itemgetter
+
 from peewee import Expression
 from db.models import *
 from parsers.avito_parser import Advertisement as Ad_avito
 
 SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE = 2000
+
 
 # def get_property_area(name: str) -> int:
 #     property_area = re.findall(r'\d+', name)
@@ -54,7 +58,7 @@ def get_property_area_from_advertisement(advertisement: Ad_avito) -> int:
         if advertisement.category in ['Гаражи и машиноместа', 'Дома, дачи, коттеджи']:
             return int(property_area[0])
         elif advertisement.category == 'Земельные участки':
-            return int(property_area[0])*100*100
+            return int(property_area[0]) * 100 * 100
         elif advertisement.category == 'Квартиры':
             return int(re.findall(r'\d+', advertisement.name.split(', ')[1])[0])
         else:
@@ -72,7 +76,8 @@ def create_parameter(advertisement: Ad_avito):
             property_type_id = create_property_type(property_type)
         security = get_security_from_advertisement(advertisement)
         property_area = get_property_area_from_advertisement(advertisement)
-        parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area, security=security)
+        parameter_id = Parameter.create(property_type_id=property_type_id, property_area=property_area,
+                                        security=security)
         return parameter_id
 
 
@@ -241,9 +246,9 @@ def get_list_property_type(category_id: int = None) -> list[tuple]:
     if category_id is None:
         property_types = Property_type.select(Property_type.id, Property_type.property_type)
     else:
-        property_types = Property_type.select(Property_type.id, Property_type.property_type).distinct().\
-            join(Parameter).\
-            join(Advertisement).\
+        property_types = Property_type.select(Property_type.id, Property_type.property_type).distinct(). \
+            join(Parameter). \
+            join(Advertisement). \
             where(Advertisement.category_id == category_id)
     list_property_type = [(p.id, p.property_type) for p in property_types]
     return list_property_type
@@ -295,24 +300,35 @@ def deactivation_advertisement():
         elm.save()
 
 
-def get_search_term_by_distance(coords_lat: float, coords_lng: float, search_radius: int) -> Expression:
+def _get_search_term_by_distance(coords_lat: float, coords_lng: float, search_radius: int) -> Expression:
+    """Условие для фильтра позволяющее выбрать все элементы попадающие в круг с центром по координатам"""
     expression_for_distance = ((coords_lat - Advertisement.coords_lat) * (coords_lat - Advertisement.coords_lat) +
-                (coords_lng - Advertisement.coords_lng) * (coords_lng - Advertisement.coords_lng)) \
-               * 111000 * 111000 <= search_radius * search_radius
+                               (coords_lng - Advertisement.coords_lng) * (coords_lng - Advertisement.coords_lng)) \
+                              * 111000 * 111000 <= search_radius * search_radius
     return expression_for_distance
 
 
-def get_advertisements_in_given_coord_area(coords_lat: float, coords_lng: float, search_radius: int = 10000):
-    expression_for_distance = get_search_term_by_distance(coords_lat, coords_lng, search_radius)
-    property_type = ['кирпичный', 'железобетонный']
+def get_advertisements_in_given_coord_area(coords_lat: float,
+                                           coords_lng: float,
+                                           search_radius: int = 10000,
+                                           category_id: int = 5,
+                                           type_transaction_id: int = 1):
+    expression_for_distance = _get_search_term_by_distance(coords_lat, coords_lng, search_radius)
     advertisements = Advertisement.select(Advertisement.coords_lat,
                                           Advertisement.coords_lng,
                                           Advertisement.url,
-                                          Price.price).\
-        join(Price).\
-        join(Parameter, on=(Advertisement.parameter_id == Parameter.id)).\
-        join(Property_type).\
-        where(expression_for_distance & (Property_type.property_type.in_(property_type))).order_by(Price.price)
+                                          Advertisement.parameter_id,
+                                          Advertisement.name,
+                                          Price.price,
+                                          Property_type.property_type,
+                                          Parameter.property_area). \
+        join(Price). \
+        join(Parameter, on=(Advertisement.parameter_id == Parameter.id)). \
+        join(Property_type). \
+        where(expression_for_distance &
+              (Advertisement.category_id == category_id) &
+              (Advertisement.type_transaction_id == type_transaction_id)
+              ).order_by(Price.price)
     return advertisements
 
 
@@ -320,16 +336,23 @@ def get_median_price(coords_lat: float,
                      coords_lng: float,
                      property_type: str,
                      type_transaction: str,
-                     search_radius: int = SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE):
-    expression_for_distance = get_search_term_by_distance(coords_lat=coords_lat,
-                                                          coords_lng=coords_lng,
-                                                          search_radius=search_radius)
-    prices = Price.select(Price.price).\
-        join(Advertisement).join(Parameter).join(Property_type).\
-        join(Type_transaction, on=(Advertisement.type_transaction_id == Type_transaction.id)).\
-        where(expression_for_distance &
-              (Property_type.property_type == property_type) &
-              (Type_transaction.type_transaction == type_transaction))
+                     search_radius: int = SEARCH_RADIUS_FO_CALC_MEDIAN_PRICE,
+                     property_area: int = None):
+    expression_for_distance = _get_search_term_by_distance(coords_lat=coords_lat,
+                                                           coords_lng=coords_lng,
+                                                           search_radius=search_radius)
+    if property_area is not None:
+        expression_for_property_area = (Parameter.property_area > property_area - 5) & (Parameter.property_area < property_area + 5)
+    else:
+        expression_for_property_area = True
+    prices = (Price.select(Price.price).
+              join(Advertisement).join(Parameter).join(Property_type).
+              join(Type_transaction, on=(Advertisement.type_transaction_id == Type_transaction.id)).
+              where(expression_for_distance &
+                    (Property_type.property_type == property_type) &
+                    (Type_transaction.type_transaction == type_transaction) &
+                    expression_for_property_area).
+              group_by(Advertisement.id))
     list_prices = [elm.price for elm in prices]
     if list_prices:
         return int(statistics.median(list_prices))
@@ -350,7 +373,7 @@ def get_profitability_rent(advertisement: Ad_avito):
         service = 4500
         expenses = toll + check + repair + service + advertisement.price
         profit = median_price * 11
-        profitability_sale = int(profit/expenses * 100)
+        profitability_sale = int(profit / expenses * 100)
         return profitability_sale
     else:
         return 0
@@ -362,7 +385,8 @@ def get_profitability_sale(advertisement: Ad_avito):
         median_price = get_median_price(coords_lat=advertisement.coords_lat,
                                         coords_lng=advertisement.coords_lng,
                                         property_type=property_type,
-                                        type_transaction=advertisement.type_transaction)
+                                        type_transaction=advertisement.type_transaction,
+                                        )
         taxes = (median_price - advertisement.price) * 0.13
         toll = 2000
         check = 500
@@ -370,7 +394,7 @@ def get_profitability_sale(advertisement: Ad_avito):
         if taxes < 0:
             return 0
         expenses = taxes + toll + check + repair + advertisement.price
-        profitability_sale = int((median_price/expenses - 1) * 100)
+        profitability_sale = int((median_price / expenses - 1) * 100)
         return profitability_sale
     else:
         return 0
@@ -384,6 +408,42 @@ def get_links_location(herf: str) -> list:
         links.append(f'https://www.avito.ru/{location}/{herf}')
     return links
 
+
+def get_profitability_rent_all(coords_lat: float,
+                               coords_lng: float,
+                               search_radius: int = 15000,
+                               category_id: int = 5):
+    advertisements = get_advertisements_in_given_coord_area(coords_lat, coords_lng, search_radius, category_id)
+    profitability_rents = []
+    count = len(advertisements)
+    i = 0
+    for advertisement in advertisements:
+        i += 1
+        median_price = get_median_price(coords_lat=advertisement.coords_lat,
+                                        coords_lng=advertisement.coords_lng,
+                                        property_type=advertisement.parameter_id.property_type_id.property_type,
+                                        type_transaction='Снять на месяц',
+                                        property_area=advertisement.parameter_id.property_area)
+        price = advertisement.price.price
+        profitability_rent = (median_price * 12 / price) * 100
+        profitability_rent = round(profitability_rent, 2)
+        profitability_rents.append({
+            'profitability_rent': profitability_rent,
+            'median_price': median_price,
+            'price': price,
+            'name': advertisement.name,
+            'url': advertisement.url,
+            'price_area': price / advertisement.parameter_id.property_area,
+        })
+        if not i % 100:
+            print(f'{i}/{count}')
+    return profitability_rents
+
+
+def get_top_rents(profitability_rents: list[dict], count: int = 25):
+    profitability_rents_sort = sorted(profitability_rents, key=itemgetter('profitability_rent'), reverse=True)
+    for elm in profitability_rents_sort[:count]:
+        print(f'{elm["profitability_rent"]}% | {elm["price"]}р | мед.пр. {elm["median_price"]} | {elm["price_area"]}м2/р | {elm["name"]} | {elm["url"]}')
 
 # if __name__ == "__main__":
 #     # print(get_search_term_by_parameters(['df', 'fff']))
