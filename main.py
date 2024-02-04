@@ -10,7 +10,7 @@ from db.handlers_advertisement import set_advertisement, deactivation_advertisem
     get_profitability_rent
 from parsers.avito_parser import AvitoParser
 
-
+# TODO вынести логирование в отдельный файл
 def log():
     """Логирование скрипта в консоль и файл"""
     logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s %(message)s')
