@@ -40,6 +40,7 @@ def sending_messages_users(users_id: list[int], message: str):
 
 def main():
     log()
+    # TODO вынести переменные в отдельный файл
     urls = [
         # 'https://www.avito.ru/kazan/garazhi_i_mashinomesta',
         # 'https://www.avito.ru/kazan/zemelnye_uchastki',
