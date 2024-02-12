@@ -4,7 +4,7 @@ from db.handlers_advertisement import get_parameters_in_dict, get_property_area_
 from db.models import Filter, Type_transaction, Category, Property_type
 from parsers.avito_parser import Advertisement
 
-
+# TODU переделать на репозиторий
 def add_filter(params: dict):
     Filter.create(**params)
 
